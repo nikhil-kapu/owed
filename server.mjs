@@ -82,7 +82,7 @@ const wrap = (fn) => (req, res) => fn(req, res).catch(e => res.status(e.status |
 
 app.get("/api/config", wrap(async (req, res) => {
   const c = await cust(req);
-  res.json({ slug: c.slug, company: c.company, instanceId: c.instance_id, hasCron: !!c.cron_id, storage: "instance-files", customers: Object.keys(customers).length });
+  res.json({ slug: c.slug, company: c.company, instanceId: c.instance_id, hasCron: !!c.cron_id, storage: "instance-files", customers: Object.values(customers).filter(x => !x.hidden).length });
 }));
 
 app.get("/api/data", wrap(async (req, res) => {
@@ -164,7 +164,8 @@ app.post("/api/waitlist", wrap(async (req, res) => {
 
 app.get("/api/customers", wrap(async (_req, res) => {
   if (!customers) await loadCustomers();
-  res.json({ count: Object.keys(customers).length, customers: Object.values(customers).map(({ slug, company, instance_id, created_at }) => ({ slug, company, instance_id, created_at })) });
+  const visible = Object.values(customers).filter(c => !c.hidden);
+  res.json({ count: visible.length, customers: visible.map(({ slug, company, instance_id, created_at }) => ({ slug, company, instance_id, created_at })) });
 }));
 
 app.get("/healthz", (_req, res) => res.json({ ok: true, storage: "instance-files" }));

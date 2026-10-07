@@ -1,5 +1,5 @@
 // Onboard a new customer: one Agent37 instance, seeded vendors, Monid CLI, weekly cron.
-// Usage: node scripts/provision.mjs --name acme [--spend '{"GitHub":5000,...}']
+// Usage: node scripts/provision.mjs --name kafka-labs [--spend '{"GitHub":5000,...}']
 // This is exactly what signup does: POST /instances -> exec (seed) -> POST /crons.
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
