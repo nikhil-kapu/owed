@@ -126,9 +126,9 @@
   <section>
     <div class="two">
       <div class="card unclaimed">
-        <h4>Unclaimed property</h4>
+        <h4>Unclaimed property <span class="pill demo" style="margin-left:6px;vertical-align:middle">Beta</span></h4>
         <div class="amt" id="ucAmt">—</div>
-        <div class="muted" id="ucNote">State unclaimed-property records searched for the company and its founders. Pre-run weekly.</div>
+        <div class="muted" id="ucNote">State unclaimed-property databases searched for the company and its founders.</div>
       </div>
       <div class="card">
         <h4>Vendors watched</h4>
@@ -154,9 +154,10 @@ const cfg = await (await fetch("/api/config")).json();
 $("instId").textContent = cfg.instanceId || "";
 const sb = cfg.supabaseUrl ? createClient(cfg.supabaseUrl, cfg.supabaseAnonKey) : null;
 
-let vendors = [], claims = [], incidents = [], runs = [];
+let vendors = [], claims = [], incidents = [], runs = [], vendorStatus = {};
 async function load() {
   const d = await (await fetch("/api/data")).json();
+  vendorStatus = d.vendor_status || {};
   vendors = (d.vendors || []).sort((a, b) => b.monthly_spend - a.monthly_spend);
   claims = (d.claims || []).sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
   incidents = d.incidents || [];
@@ -182,7 +183,7 @@ function render() {
     const demo = e.terms_verified === false ? `<span class="pill demo">demo terms</span>` : "";
     return `<tr class="claim" data-id="${c.id}">
       <td><div class="vendor">${vname(c.vendor_id)}</div><div class="period">${c.period || ""}</div></td>
-      <td class="uptime"><span class="bad">${e.uptime_pct != null ? Number(e.uptime_pct).toFixed(2) + "%" : "—"}</span> <span class="muted">vs ${e.sla_target ?? "—"}% SLA</span><br><span class="muted">${e.downtime_minutes ?? "—"} min down · ${(e.incidents||[]).length} incidents</span></td>
+      <td class="uptime"><span class="bad">${e.uptime_pct != null ? Number(e.uptime_pct).toFixed(2) + "%" : "—"}</span> <span class="muted">vs ${e.sla_target ?? "—"}% SLA${e.provisional ? " · provisional" : ""}</span><br><span class="muted">${e.downtime_minutes ?? "—"} min down · ${(e.incidents||[]).length} counted · ${(e.not_counted||[]).length} not counted</span></td>
       <td>${e.credit_pct != null ? e.credit_pct + "% credit" : ""} ${demo}</td>
       <td><span class="pill ${c.status}">${c.status}</span></td>
       <td class="amt">${fmt(c.amount_usd)}</td>
@@ -197,13 +198,21 @@ function render() {
   if (uc.length) {
     const amt = uc.reduce((s,c)=>s+Number(c.amount_usd),0);
     const e = uc[0].evidence || {};
-    $("ucAmt").textContent = amt > 0 ? fmt(amt) : "No confirmed matches";
+    const dbs = (e.searched || []).filter(s => /state controller|delaware|missingmoney/i.test(s.source || "")).length || 3;
+    $("ucAmt").textContent = amt > 0 ? fmt(amt) : `Checked ${dbs} state databases`;
     $("ucNote").innerHTML = (e.searched || []).map(s => `<div style="display:flex;gap:10px;padding:5px 0;border-bottom:1px solid var(--line)"><span style="color:var(--ink);min-width:150px">${s.source}</span><span>${s.result}</span></div>`).join("")
       + (e.notes ? `<div style="margin-top:8px">${e.notes}</div>` : "");
   }
 
-  // vendors
-  $("vendors").innerHTML = vendors.map(v => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)"><span style="color:var(--ink)">${v.name}</span><span class="uptime">${v.sla_target}% SLA · ${fmt(v.monthly_spend)}/mo</span></div>`).join("");
+  // vendors + status from the last run
+  $("vendors").innerHTML = vendors.map(v => {
+    const st = (vendorStatus || {})[v.id] || {};
+    const terms = v.sla_target ? `${v.sla_target}% / ${v.period || "month"}` : "no public SLA";
+    const line = st.status === "claim" ? `claim: ${Number(st.worst_uptime_pct).toFixed(2)}% in ${st.worst_period}`
+      : st.status === "within_sla" ? `within SLA` : st.status === "sla_missed_no_credit" ? `SLA missed · ${v.note}`
+      : st.status === "no_public_credits" ? v.note : st.status === "no_data" ? "no reliable incident data" : (v.note || "");
+    return `<div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--line)"><span style="color:var(--ink);min-width:70px">${v.name}</span><span style="flex:1;color:var(--ink-2);font-size:13px">${line}</span><span class="uptime" style="white-space:nowrap">${terms} · ${fmt(v.monthly_spend)}/mo</span></div>`;
+  }).join("");
 
   // runs
   const r = runs[0];
@@ -259,7 +268,8 @@ function openClaim(id) {
       <div>Status</div><div><span class="pill ${c.status}">${c.status}</span></div></div>
     <div class="eyebrow">Evidence</div>
     ${(e.incidents||[]).map(i => `<div class="inc"><div>${i.title || "Incident"}</div><div class="m">${(i.started_at||"").slice(0,16).replace("T"," ")} · ${i.minutes} min · <a href="${i.source_url||"#"}" target="_blank">source</a></div></div>`).join("")}
-    ${(e.degraded_not_counted||[]).length ? `<div class="muted" style="margin:8px 0 16px">${e.degraded_not_counted.length} degraded-performance incidents listed but not counted.</div>` : ""}
+    ${(e.not_counted||[]).length ? `<div class="eyebrow" style="margin-top:16px">Listed but not counted</div>${e.not_counted.map(i => `<div class="inc" style="border-left-color:var(--line)"><div>${i.title || ""}</div><div class="m">${(i.started_at||"").slice(0,16).replace("T"," ")} · ${i.minutes ?? "—"} min · ${i.reason || ""}</div></div>`).join("")}` : ""}
+    ${e.claim_deadline ? `<div class="muted" style="margin-top:12px">Deadline: ${e.claim_deadline}</div>` : ""}
     <div class="eyebrow" style="margin-top:18px">Claim drafted by the agent</div>
     <div class="draft" style="margin-top:8px">${(c.draft||"").replace(/</g,"&lt;")}</div>
     <div style="display:flex;gap:10px;margin-top:18px">${c.status === "found" ? `<button data-act="approve" data-id="${c.id}">Approve claim</button>` : c.status === "approved" ? `<button data-act="file" data-id="${c.id}">Mark filed</button>` : ""}<button class="ghost" onclick="navigator.clipboard.writeText(${JSON.stringify(c.draft||"")})">Copy draft</button></div>`;

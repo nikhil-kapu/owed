@@ -66,8 +66,8 @@ app.get("/api/data", async (_req, res) => {
       const [vendors, claims, incidents, runs] = await Promise.all([sbGet("vendors"), sbGet("claims"), sbGet("incidents"), sbGet("runs", "&order=started_at.desc&limit=10")]);
       return res.json({ vendors, claims, incidents, runs });
     }
-    const [vendors, claims, incidents, runs] = await Promise.all(["vendors", "claims", "incidents", "runs"].map(n => instRead(`${STORE}/${n}.json`)));
-    res.json({ vendors, claims, incidents, runs });
+    const [vendors, claims, incidents, runs, vendor_status] = await Promise.all(["vendors", "claims", "incidents", "runs", "vendor_status"].map(n => instRead(`${STORE}/${n}.json`)));
+    res.json({ vendors, claims, incidents, runs, vendor_status: Array.isArray(vendor_status) ? {} : vendor_status });
   } catch (e) { res.status(500).json({ error: String(e) }); }
 });
 

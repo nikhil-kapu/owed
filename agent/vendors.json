@@ -6,6 +6,7 @@
   "sla_url": "https://aws.amazon.com/compute/sla/",
   "status_url": "https://health.aws.amazon.com/health/status",
   "sla_target": 99.99,
+  "period": "month",
   "sla_tiers": [
    {
     "below": 99.99,
@@ -20,64 +21,65 @@
     "credit_pct": 100
    }
   ],
-  "terms_verified": true
+  "claimable": true,
+  "terms_verified": true,
+  "covered": "Each AWS account using Amazon EC2. Region-Level SLA (instances across 2+ AZs) = 99.99%; Instance-Level SLA (single instance) = 99.5%. Tiers below are Region-Level.",
+  "claim_deadline": "By the end of the second billing cycle after the incident",
+  "how_to_claim": "Open a case in AWS Support Center. Subject: 'Amazon Compute SLA Credit Request \u2013 Region-Level Claim' (or Instance-Level Claim); include dates/times/region of each incident, EC2 resource IDs, and request logs. Credit is % of monthly EC2 bill in affected region, applied to future EC2 payments; only issued if > $1.",
+  "note": ""
  },
  {
   "id": "v-twilio",
   "name": "Twilio",
   "monthly_spend": 4500,
-  "sla_url": "https://www.twilio.com/en-us/legal/service-level-agreement",
+  "sla_url": "https://www.twilio.com/en-us/legal/service-level-agreement/twilio-apis",
   "status_url": "https://status.twilio.com",
   "sla_target": 99.95,
+  "period": "month",
   "sla_tiers": [
    {
     "below": 99.95,
     "credit_pct": 10
-   },
-   {
-    "below": 99.0,
-    "credit_pct": 25
    }
   ],
-  "terms_verified": false
+  "claimable": true,
+  "terms_verified": true,
+  "covered": "All Twilio-branded APIs + SendGrid Mail Send API (standard). 99.99% threshold if customer bought Twilio Enterprise Edition (or Administration Edition before Oct 24, 2024). Segment and Flex Critical Scenarios have separate SLAs.",
+  "claim_deadline": "Within 30 days from the last day of the affected calendar month",
+  "how_to_claim": "Support ticket at https://help.twilio.com (SendGrid: support.sendgrid.com) with subject 'SLA Claim', dates/times of unavailability per status.twilio.com, and documentation. Credit = 10% of fees for affected APIs that month (excl. taxes/carrier fees), applied to future charges, not refunds.",
+  "note": ""
  },
  {
   "id": "v-datadog",
   "name": "Datadog",
   "monthly_spend": 6000,
-  "sla_url": "https://www.datadoghq.com/legal/service-level-agreement/",
+  "sla_url": "https://www.datadoghq.com/legal/msa/",
   "status_url": "https://status.datadoghq.com",
-  "sla_target": 99.9,
-  "sla_tiers": [
-   {
-    "below": 99.9,
-    "credit_pct": 10
-   },
-   {
-    "below": 99.0,
-    "credit_pct": 25
-   }
-  ],
-  "terms_verified": false
+  "sla_target": 99.8,
+  "period": "month",
+  "sla_tiers": [],
+  "claimable": false,
+  "terms_verified": true,
+  "covered": "Core Services on a Datadog Order (Master Subscription Agreement)",
+  "claim_deadline": "N/A (no service credits). Termination right arises after 2 consecutive months below 99.8%, exercisable in the following calendar month by written notice.",
+  "how_to_claim": "NO SERVICE CREDITS. Sole remedy: terminate the affected Core Service commitment and receive a pro-rated refund of unused prepaid amounts. Availability info can be requested via a Support request.",
+  "note": "SLA missed \u2192 cancel-and-refund right, no credit"
  },
  {
   "id": "v-slack",
   "name": "Slack",
   "monthly_spend": 3200,
-  "sla_url": "https://slack.com/terms-of-service/service-level-agreement",
+  "sla_url": "https://slack.com/terms/service-level-agreement",
   "status_url": "https://slack-status.com",
-  "sla_target": 99.99,
-  "sla_tiers": [
-   {
-    "below": 99.99,
-    "credit_pct": 10
-   },
-   {
-    "below": 99.0,
-    "credit_pct": 25
-   }
-  ],
-  "terms_verified": false
+  "sla_target": null,
+  "period": "month",
+  "sla_tiers": [],
+  "claimable": false,
+  "terms_verified": false,
+  "covered": "Online Slack Services (Salesforce)",
+  "claim_deadline": "Not published",
+  "how_to_claim": "No public credit schedule or claim process on the current public SLA page. Any credit terms would be in the customer's own contract (likely Enterprise / negotiated).",
+  "note": "No public SLA credits. Check your contract."
  },
  {
   "id": "v-vercel",
@@ -86,6 +88,7 @@
   "sla_url": "https://vercel.com/legal/sla",
   "status_url": "https://www.vercel-status.com",
   "sla_target": 99.99,
+  "period": "month",
   "sla_tiers": [
    {
     "below": 99.99,
@@ -94,20 +97,34 @@
    {
     "below": 99.0,
     "credit_pct": 25
+   },
+   {
+    "below": 95.0,
+    "credit_pct": 50
    }
   ],
-  "terms_verified": false
+  "claimable": true,
+  "terms_verified": true,
+  "covered": "Enterprise plan only (Enterprise Service Level Agreement). Covers content-serving platform; excludes API and CLI.",
+  "claim_deadline": "Notify Vercel in writing within 30 days of becoming eligible for a credit",
+  "how_to_claim": "Written notice to Vercel with log files showing the Unscheduled Downtime and its date/time. Credits capped at 50% of monthly fee, applied to future fees within 60 days of request.",
+  "note": ""
  },
  {
   "id": "v-github",
   "name": "GitHub",
   "monthly_spend": 2000,
-  "sla_url": "https://github.com/customer-terms/github-enterprise-service-level-agreement",
+  "sla_url": "https://github.com/customer-terms/github-online-services-sla",
   "status_url": "https://www.githubstatus.com",
   "sla_target": 99.9,
+  "period": "quarter",
   "sla_tiers": [
    {
     "below": 99.9,
+    "credit_pct": 5
+   },
+   {
+    "below": 99.5,
     "credit_pct": 10
    },
    {
@@ -115,6 +132,11 @@
     "credit_pct": 25
    }
   ],
-  "terms_verified": false
+  "claimable": true,
+  "terms_verified": true,
+  "covered": "GitHub Enterprise Cloud: git Operations, Issues, Pages, Pull Requests, Webhooks, and API requests to these. Measured per calendar quarter.",
+  "claim_deadline": "Written request within 30 days of the end of the Applicable Period (calendar quarter)",
+  "how_to_claim": "Written request to GitHub Support (or Microsoft support ticket if bought through Microsoft). Credit is refund or account credit, not cash; max 90 days of paid service per quarter; invoices must be paid.",
+  "note": ""
  }
 ]
