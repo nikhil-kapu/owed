@@ -4,6 +4,8 @@ Every SaaS contract promises service credits when the vendor misses its uptime S
 
 Built at the "Build an Agent" hackathon (SF Tech Week, Oct 7, 2026).
 
+**First run, six vendors:** $3,675 in SLA credits across 9 vendor-months (GitHub $1,700, Vercel $1,375, Datadog $600), backed by 40 incidents from the vendors' own status pages, each with a source link and the cited SLA clause. Where data was unreliable (AWS) or a portal blocked bots (state unclaimed-property sites), the agent reported that instead of guessing.
+
 ## How it works
 
 - **Agent37** — each customer gets an isolated agent instance. A weekly Agent37 cron runs the scan; "Run scan now" fires the same standing instructions on demand. The session transcript is the audit trail.
