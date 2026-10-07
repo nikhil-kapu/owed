@@ -33,7 +33,7 @@ Analyze the last 3 full calendar months plus the current month to date. Produce 
    - GitHub:  https://www.githubstatus.com/api/v2/incidents.json
    - Vercel:  https://www.vercel-status.com/api/v2/incidents.json
    - Datadog: https://status.datadoghq.com/api/v2/incidents.json
-   - Slack:   https://slack-status.com/api/v2.0.0/history  (JSON; fields differ, map them)
+   - Slack:   https://slack-status.com/api/v2.0.0/history  (returns a JSON LIST, not an object: each item has id, title, type ("incident" | "outage" | "notice"), status, url, date_created, date_updated, notes[], services[]; count type "outage" and "incident" whose title says outage/unavailable/errors; minutes = date_updated - date_created)
    - AWS:     the AWS Health status page history; use web search / extraction ("AWS service health history <month> <year>") and the status_url. If you cannot get reliable data, record 0 incidents for AWS and say so in the log.
    Use `curl -s <url>` from the shell for JSON endpoints (fast and exact). Fall back to web extraction or the browser only if curl fails.
    For each incident in the period: title, started_at (created_at), ended_at (resolved_at), minutes = resolved - started, impact, shortlink/source_url.

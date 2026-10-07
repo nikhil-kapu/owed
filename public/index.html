@@ -234,7 +234,7 @@ $("runBtn").onclick = async () => {
   let thinking = 0;
   es.addEventListener("response.tool_call.started", (e) => { const d = JSON.parse(e.data); line("ok", `▸ ${d.tool || "tool"}  ${d.label || JSON.stringify(d.arguments || {}).slice(0, 160)}`); });
   es.addEventListener("response.reasoning.delta", () => { if (++thinking % 40 === 0) line("t", "… reasoning"); });
-  es.addEventListener("response.delta", (e) => { try { const d = JSON.parse(e.data); const t = d.output_text?.delta; if (t) line("", t); } catch {} });
+  es.addEventListener("response.output_text.delta", (e) => { try { const d = JSON.parse(e.data); const t = d.output_text?.delta; if (t) line("", t); } catch {} });
   es.addEventListener("response.completed", () => { line("ok", "✓ run completed"); es.close(); $("runBtn").disabled = false; load(); });
   es.addEventListener("response.failed", (e) => { line("warn", "✗ run failed " + e.data); es.close(); $("runBtn").disabled = false; });
   es.onerror = () => { /* stream ended or reconnecting; data poll keeps the UI current */ };
