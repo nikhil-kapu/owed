@@ -35,7 +35,8 @@ Feeds (use `curl -s`):
    - GitHub:  https://www.githubstatus.com/api/v2/incidents.json
    - Vercel:  https://www.vercel-status.com/api/v2/incidents.json
    - Datadog: https://status.datadoghq.com/api/v2/incidents.json
-   - AWS:     AWS Health status history via web search / extraction. If you cannot get reliable data, record 0 incidents and say so.
+   - AWS:     there is NO reliable public incident feed for the account's regions. Do not search or scrape for it. Record AWS as status "no_data" with note "No public per-account incident feed; connect AWS Health API for this vendor" and move on immediately.
+   Do not run `agent37 cron` commands or inspect schedules; the schedule is managed outside this run.
    Each feed returns the last 50 incidents; if the oldest is newer than the start of the period, note that the period is partially covered.
 
 ## Procedure
