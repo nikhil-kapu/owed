@@ -37,13 +37,15 @@ Analyze the last 3 full calendar months plus the current month to date. Produce 
    - AWS:     the AWS Health status page history; use web search / extraction ("AWS service health history <month> <year>") and the status_url. If you cannot get reliable data, record 0 incidents for AWS and say so in the log.
    Use `curl -s <url>` from the shell for JSON endpoints (fast and exact). Fall back to web extraction or the browser only if curl fails.
    For each incident in the period: title, started_at (created_at), ended_at (resolved_at), minutes = resolved - started, impact, shortlink/source_url.
-   - Count toward downtime: impact "major" or "critical", or an incident whose text says outage / unavailable / failed requests / elevated error rates for a core service.
-   - Do NOT count: scheduled maintenance, impact "none", or purely informational posts. "Minor" / degraded-performance incidents: list them in the evidence as "degraded, not counted" and do not count their minutes.
-   Insert every counted incident into incidents (vendor_id, title, started_at, ended_at, minutes, source_url). Skip an incident that already exists for that vendor with the same title and started_at.
+   - Count toward downtime ONLY incidents with impact exactly "major" or "critical" (Statuspage feeds), or Slack history items of type "outage". Nothing else counts, whatever the title says.
+   - Do NOT count: impact "minor" or "none", scheduled maintenance, informational posts, Slack "incident"/"notice" items. List "minor" incidents in the evidence as "degraded, not counted" and never add their minutes.
+   - Cap any single incident at 24 hours (1440 minutes); an unresolved incident ends now.
+   REGENERATE, don't append: incidents.json / the incidents table must contain exactly the counted incidents you found THIS run. For each vendor you process, delete that vendor's previous incidents and write the fresh set. Likewise each vendor's SLA claims are rewritten from this run's numbers (never leave stale claims; claims with source "unclaimed" are untouched).
+   Ignore any skill, note or script you saved on previous runs; follow these instructions exactly.
 
 3. Compute monthly uptime per vendor per month:
    downtime_minutes = sum of counted incident minutes in that month (cap each incident at the month's boundaries)
-   uptime_pct = 100 * (1 - downtime_minutes / minutes_in_month)
+   uptime_pct = 100 * (1 - downtime_minutes / minutes_in_month)   # minutes_in_month = full calendar month (e.g. 44640 for a 31-day month), also for the current month to date; mark current-month claims "provisional": true in evidence
    If uptime_pct >= sla_target: no claim for that month.
    Else pick the tier: sla_tiers is ordered from highest "below" to lowest; the credit is the credit_pct of the LAST tier whose "below" is greater than uptime_pct.
    amount_usd = round(monthly_spend * credit_pct / 100, 2)

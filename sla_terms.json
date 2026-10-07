@@ -1,0 +1,81 @@
+[
+  {
+    "vendor": "AWS (Amazon EC2 / Compute)",
+    "applies_to": "Each AWS account using Amazon EC2. Region-Level SLA (instances across 2+ AZs) = 99.99%; Instance-Level SLA (single instance) = 99.5%. Tiers below are Region-Level.",
+    "uptime_commitment": "99.99% monthly (Region-Level); 99.5% monthly (Instance-Level)",
+    "tiers": [
+      {"min_uptime": 99.0, "max_uptime": 99.99, "credit_pct": 10},
+      {"min_uptime": 95.0, "max_uptime": 99.0, "credit_pct": 30},
+      {"min_uptime": 0, "max_uptime": 95.0, "credit_pct": 100}
+    ],
+    "instance_level_tiers": [
+      {"min_uptime": 99.0, "max_uptime": 99.5, "credit_pct": 10},
+      {"min_uptime": 95.0, "max_uptime": 99.0, "credit_pct": 30},
+      {"min_uptime": 0, "max_uptime": 95.0, "credit_pct": 100}
+    ],
+    "claim_deadline": "By the end of the second billing cycle after the incident",
+    "how_to_claim": "Open a case in AWS Support Center. Subject: 'Amazon Compute SLA Credit Request – Region-Level Claim' (or Instance-Level Claim); include dates/times/region of each incident, EC2 resource IDs, and request logs. Credit is % of monthly EC2 bill in affected region, applied to future EC2 payments; only issued if > $1.",
+    "source_url": "https://aws.amazon.com/compute/sla/",
+    "verified": true
+  },
+  {
+    "vendor": "Twilio (Twilio APIs SLA)",
+    "applies_to": "All Twilio-branded APIs + SendGrid Mail Send API (standard). 99.99% threshold if customer bought Twilio Enterprise Edition (or Administration Edition before Oct 24, 2024). Segment and Flex Critical Scenarios have separate SLAs.",
+    "uptime_commitment": "99.95% monthly API availability (99.99% for Enterprise Edition)",
+    "tiers": [
+      {"min_uptime": 0, "max_uptime": 99.95, "credit_pct": 10}
+    ],
+    "claim_deadline": "Within 30 days from the last day of the affected calendar month",
+    "how_to_claim": "Support ticket at https://help.twilio.com (SendGrid: support.sendgrid.com) with subject 'SLA Claim', dates/times of unavailability per status.twilio.com, and documentation. Credit = 10% of fees for affected APIs that month (excl. taxes/carrier fees), applied to future charges, not refunds.",
+    "source_url": "https://www.twilio.com/en-us/legal/service-level-agreement/twilio-apis",
+    "verified": true
+  },
+  {
+    "vendor": "Datadog",
+    "applies_to": "Core Services on a Datadog Order (Master Subscription Agreement)",
+    "uptime_commitment": "99.8% (Availability Standard)",
+    "tiers": [],
+    "claim_deadline": "N/A (no service credits). Termination right arises after 2 consecutive months below 99.8%, exercisable in the following calendar month by written notice.",
+    "how_to_claim": "NO SERVICE CREDITS. Sole remedy: terminate the affected Core Service commitment and receive a pro-rated refund of unused prepaid amounts. Availability info can be requested via a Support request.",
+    "source_url": "https://www.datadoghq.com/legal/msa/",
+    "verified": true
+  },
+  {
+    "vendor": "Slack",
+    "applies_to": "Online Slack Services (Salesforce)",
+    "uptime_commitment": "No numeric uptime published on current public page; 'commercially reasonable efforts' to be available 24/7 (effective July 11, 2024)",
+    "tiers": [],
+    "claim_deadline": "Not published",
+    "how_to_claim": "No public credit schedule or claim process on the current public SLA page. Any credit terms would be in the customer's own contract (likely Enterprise / negotiated).",
+    "source_url": "https://slack.com/terms/service-level-agreement",
+    "verified": false
+  },
+  {
+    "vendor": "Vercel",
+    "applies_to": "Enterprise plan only (Enterprise Service Level Agreement). Covers content-serving platform; excludes API and CLI.",
+    "uptime_commitment": "99.99% monthly",
+    "tiers": [
+      {"min_uptime": 99.1, "max_uptime": 99.98, "credit_pct": 10},
+      {"min_uptime": 95.0, "max_uptime": 99.0, "credit_pct": 25},
+      {"min_uptime": 0, "max_uptime": 95.0, "credit_pct": 50}
+    ],
+    "claim_deadline": "Notify Vercel in writing within 30 days of becoming eligible for a credit",
+    "how_to_claim": "Written notice to Vercel with log files showing the Unscheduled Downtime and its date/time. Credits capped at 50% of monthly fee, applied to future fees within 60 days of request.",
+    "source_url": "https://vercel.com/legal/sla",
+    "verified": true
+  },
+  {
+    "vendor": "GitHub (Enterprise Cloud)",
+    "applies_to": "GitHub Enterprise Cloud: git Operations, Issues, Pages, Pull Requests, Webhooks, and API requests to these. Measured per calendar quarter.",
+    "uptime_commitment": "99.9% quarterly",
+    "tiers": [
+      {"min_uptime": 99.5, "max_uptime": 99.9, "credit_pct": 5},
+      {"min_uptime": 99.0, "max_uptime": 99.5, "credit_pct": 10},
+      {"min_uptime": 0, "max_uptime": 99.0, "credit_pct": 25}
+    ],
+    "claim_deadline": "Written request within 30 days of the end of the Applicable Period (calendar quarter)",
+    "how_to_claim": "Written request to GitHub Support (or Microsoft support ticket if bought through Microsoft). Credit is refund or account credit, not cash; max 90 days of paid service per quarter; invoices must be paid.",
+    "source_url": "https://github.com/customer-terms/github-online-services-sla",
+    "verified": true
+  }
+]
