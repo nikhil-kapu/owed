@@ -39,7 +39,13 @@ Feeds (use `curl -s`):
    Do not run `agent37 cron` commands or inspect schedules; the schedule is managed outside this run.
    Each feed returns the last 50 incidents; if the oldest is newer than the start of the period, note that the period is partially covered.
 
-## Procedure
+## Procedure (short version: the numbers come from the script, you write the emails)
+
+FIRST run the deterministic scan, which applies every rule below exactly and writes incidents, claims, vendor_status and the run record:
+  cd /home/node/owed && OWED_SESSION_ID="<your session id if known>" python3 scan.py
+Read its output. Then, for each claim in claims.json with source "sla": rewrite `draft` as a polished, concise email to the vendor's support team per `evidence.how_to_claim`, keeping EVERY number, date, link and the cited SLA URL exactly as the script produced them (never change amounts, uptime, minutes or which incidents are counted). Write claims.json back atomically. Append "drafts refined by agent" to the latest run's log in runs.json. Then print the table in Rules and stop. Do not re-fetch feeds or recompute anything; if scan.py fails, report the error in the run log and stop.
+
+## Reference: the rules scan.py implements
 
 0. Start a run: add a runs row {status:"running", session_id}. Keep its id.
 1. Load vendors.

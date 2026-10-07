@@ -141,7 +141,8 @@ app.post("/api/signup", wrap(async (req, res) => {
   const inst = await hostApi("/instances", { template: "agent37-hermes", name: `owed-${slug}`, budget: { credit_micros: 2_000_000, monthly_cap_micros: 10_000_000 } });
   // 2. Seed the vendor list (SLA terms from sla_terms.json) and empty stores; Monid CLI installs in the background.
   const vendors = readFileSync(join(here, "agent", "vendors.json"), "utf8");
-  await instExec(inst.id, `mkdir -p ${STORE} && cd ${STORE} && cat > vendors.json <<'JSON'\n${vendors}\nJSON\nfor f in incidents claims runs; do echo '[]' > $f.json; done; echo '{}' > vendor_status.json; echo seeded`);
+  const scan = readFileSync(join(here, "agent", "scan.py"), "utf8");
+  await instExec(inst.id, `mkdir -p ${STORE} && cd ${STORE} && cat > vendors.json <<'JSON'\n${vendors}\nJSON\ncat > scan.py <<'PYEOF'\n${scan}\nPYEOF\ncat > customer.json <<'JSON'\n${JSON.stringify({ company, email })}\nJSON\nfor f in incidents claims runs; do echo '[]' > $f.json; done; echo '{}' > vendor_status.json; echo seeded`);
   if (MONID_API_KEY) instExec(inst.id, `nohup sh -c 'npm i -g @monid-ai/cli && export PATH=/home/node/.npm-global/bin:$PATH && monid keys add --label main --key ${MONID_API_KEY} && monid keys activate --label main' >/tmp/monid.log 2>&1 &`).catch(() => {});
   // 3. The job it owns from now on.
   const cron = await hostApi(`/instances/${inst.id}/crons`, { name: "Owed weekly recovery scan", prompt: prompt(), schedule: "0 9 * * 1", timezone: "America/Los_Angeles" });
