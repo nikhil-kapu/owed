@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Owed</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#101010; --ink-2:#4a4a4a; --ink-3:#8a8a8a; --line:#e6e6e6; --paper:#ffffff; --wash:#f6f6f4;
+    --yellow:#FFD60A; --yellow-ink:#8a6d00; --green:#157347; --green-wash:#e8f5ee; --red:#b42318; --red-wash:#fdecec;
+    --mono:'JetBrains Mono',ui-monospace,Menlo,monospace; --sans:'Inter',system-ui,sans-serif; --display:'Inter Tight','Inter',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box} html,body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5}
+  a{color:inherit}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+  header{display:flex;align-items:center;justify-content:space-between;padding:22px 0;border-bottom:1px solid var(--line)}
+  .brand{display:flex;align-items:baseline;gap:14px}
+  .wordmark{font-family:var(--display);font-weight:800;font-size:26px;letter-spacing:-0.03em}
+  .tag{color:var(--ink-2);font-size:14px}
+  .status{display:flex;align-items:center;gap:16px;font-size:13px;color:var(--ink-2)}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;margin-right:7px;box-shadow:0 0 0 3px var(--green-wash)}
+  .dot.busy{background:var(--yellow);box-shadow:0 0 0 3px #fff6c2;animation:pulse 1s infinite}
+  @keyframes pulse{50%{opacity:.4}}
+  button{font:inherit;cursor:pointer;border:1px solid var(--ink);background:var(--ink);color:#fff;padding:10px 16px;border-radius:8px;font-weight:600}
+  button.primary{background:var(--yellow);border-color:var(--yellow);color:var(--ink)}
+  button.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+  button.small{padding:6px 10px;font-size:13px;border-radius:6px}
+  button:disabled{opacity:.5;cursor:default}
+
+  .hero{display:grid;grid-template-columns:1.4fr 1fr;gap:40px;padding:56px 0 40px;align-items:end}
+  .eyebrow{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+  .big{font-family:var(--display);font-weight:800;font-size:clamp(64px,9vw,120px);line-height:.95;letter-spacing:-0.045em;margin:10px 0 6px}
+  .big .mark{background:linear-gradient(transparent 55%,var(--yellow) 55%)}
+  .sub{font-size:18px;color:var(--ink-2);max-width:520px}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .stat{padding:18px 20px;border-right:1px solid var(--line)} .stat:last-child{border-right:0}
+  .stat b{display:block;font-family:var(--display);font-size:28px;font-weight:700;letter-spacing:-0.02em}
+  .stat span{font-size:13px;color:var(--ink-3)}
+
+  section{padding:28px 0;border-top:1px solid var(--line)}
+  .sec-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px}
+  h2{font-family:var(--display);font-size:20px;font-weight:700;letter-spacing:-0.02em;margin:0}
+  .muted{color:var(--ink-3);font-size:13px}
+
+  .run{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+  .term{background:#111;color:#e8e8e8;border-radius:12px;padding:16px 18px;font-family:var(--mono);font-size:12.5px;line-height:1.55;height:260px;overflow:auto;white-space:pre-wrap}
+  .term .t{color:#9a9a9a} .term .ok{color:#7ee2a8} .term .warn{color:#ffd60a}
+  .runlog{font-family:var(--mono);font-size:12.5px;white-space:pre-wrap;color:var(--ink-2);background:var(--wash);border-radius:12px;padding:16px 18px;height:260px;overflow:auto}
+
+  table{width:100%;border-collapse:collapse}
+  th{text-align:left;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);font-weight:600;padding:10px 12px;border-bottom:1px solid var(--line)}
+  td{padding:14px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+  tr.claim{cursor:pointer} tr.claim:hover{background:var(--wash)}
+  .vendor{font-weight:600} .period{color:var(--ink-3);font-size:13px}
+  .amt{font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:-0.02em;text-align:right;white-space:nowrap}
+  .pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid var(--line)}
+  .pill.found{background:#fff6c2;border-color:#f3dc6a;color:var(--yellow-ink)}
+  .pill.approved{background:var(--green-wash);border-color:#b7e1c8;color:var(--green)}
+  .pill.filed{background:var(--ink);border-color:var(--ink);color:#fff}
+  .pill.demo{color:var(--ink-3)}
+  .uptime{font-family:var(--mono);font-size:13px}
+  .uptime .bad{color:var(--red);font-weight:500}
+  .actions{white-space:nowrap;text-align:right}
+  .empty{padding:36px;text-align:center;color:var(--ink-3);border:1px dashed var(--line);border-radius:12px}
+
+  .drawer{position:fixed;inset:0 0 0 auto;width:min(620px,100%);background:#fff;border-left:1px solid var(--line);box-shadow:-20px 0 60px rgba(0,0,0,.08);transform:translateX(100%);transition:transform .25s;z-index:20;overflow:auto;padding:28px}
+  .drawer.open{transform:none}
+  .scrim{position:fixed;inset:0;background:rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:opacity .25s;z-index:10}
+  .scrim.open{opacity:1;pointer-events:auto}
+  .drawer h3{font-family:var(--display);font-size:28px;letter-spacing:-0.03em;margin:0 0 4px}
+  .kv{display:grid;grid-template-columns:140px 1fr;gap:8px 16px;font-size:14px;margin:18px 0}
+  .kv div:nth-child(odd){color:var(--ink-3)}
+  .inc{border-left:3px solid var(--yellow);padding:6px 12px;margin:8px 0;font-size:14px}
+  .inc .m{font-family:var(--mono);color:var(--ink-3);font-size:12px}
+  .draft{background:var(--wash);border-radius:12px;padding:16px;white-space:pre-wrap;font-size:14px;line-height:1.55}
+  .close{position:absolute;top:18px;right:18px}
+
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+  .card{border:1px solid var(--line);border-radius:12px;padding:20px}
+  .card h4{margin:0 0 8px;font-family:var(--display);font-size:17px;letter-spacing:-0.01em}
+  .unclaimed .amt{text-align:left;font-size:34px}
+  footer{padding:36px 0 60px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;color:var(--ink-2);font-size:14px}
+  footer b{color:var(--ink)}
+  .logos{display:flex;gap:14px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+  @media (max-width:860px){.hero,.run,.two{grid-template-columns:1fr}.stats{grid-template-columns:1fr}.stat{border-right:0;border-bottom:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><span class="wordmark">Owed</span><span class="tag">Money your company is owed. Found weekly, filed on approval.</span></div>
+    <div class="status">
+      <span><span class="dot" id="dot"></span><span id="agentState">Agent idle · weekly scan Mon 9:00</span></span>
+      <button class="primary" id="runBtn">Run scan now</button>
+    </div>
+  </header>
+
+  <div class="hero">
+    <div>
+      <div class="eyebrow">Owed to you right now</div>
+      <div class="big"><span class="mark" id="total">$0</span></div>
+      <div class="sub" id="subline">Service credits your vendors owe you under their own SLAs, plus unclaimed property held in your company's name.</div>
+    </div>
+    <div class="stats">
+      <div class="stat"><b id="sFound">$0</b><span>found, awaiting approval</span></div>
+      <div class="stat"><b id="sApproved">$0</b><span>approved / filed</span></div>
+      <div class="stat"><b id="sIncidents">0</b><span>incidents on record</span></div>
+    </div>
+  </div>
+
+  <section>
+    <div class="sec-head"><h2>This week's scan</h2><span class="muted" id="runMeta">No runs yet</span></div>
+    <div class="run">
+      <div class="term" id="term"><span class="t">// Agent37 instance <span id="instId"></span>. Press "Run scan now" to fire the weekly cron and watch the agent work.</span></div>
+      <div class="runlog" id="runlog">Latest run log will appear here.</div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Claims</h2><span class="muted">Every claim cites the incident and the SLA clause. Nothing is filed without your approval.</span></div>
+    <div id="claims"></div>
+  </section>
+
+  <section>
+    <div class="two">
+      <div class="card unclaimed">
+        <h4>Unclaimed property</h4>
+        <div class="amt" id="ucAmt">—</div>
+        <div class="muted" id="ucNote">State unclaimed-property records searched for the company and its founders. Pre-run weekly.</div>
+      </div>
+      <div class="card">
+        <h4>Vendors watched</h4>
+        <div id="vendors" class="muted">Loading…</div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div><b>Free until it recovers money. We keep 25%.</b><br>For finance and ops leads at 20–500 person companies paying 10+ SaaS and infra vendors. Each customer gets their own agent, on its own computer, on a weekly schedule.</div>
+    <div class="logos"><span>Agent37</span><span>OpenAI</span><span>Supabase</span><span>Monid</span><span>InstaCloud</span></div>
+  </footer>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer"></aside>
+
+<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+const $ = (id) => document.getElementById(id);
+const fmt = (n) => "$" + Math.round(Number(n||0)).toLocaleString();
+const cfg = await (await fetch("/api/config")).json();
+$("instId").textContent = cfg.instanceId || "";
+const sb = cfg.supabaseUrl ? createClient(cfg.supabaseUrl, cfg.supabaseAnonKey) : null;
+
+let vendors = [], claims = [], incidents = [], runs = [];
+async function load() {
+  const d = await (await fetch("/api/data")).json();
+  vendors = (d.vendors || []).sort((a, b) => b.monthly_spend - a.monthly_spend);
+  claims = (d.claims || []).sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
+  incidents = d.incidents || [];
+  runs = (d.runs || []).sort((a, b) => (b.started_at || "").localeCompare(a.started_at || ""));
+  render();
+}
+function vname(id) { return vendors.find(v => v.id === id)?.name || "—"; }
+function render() {
+  const total = claims.reduce((s, c) => s + Number(c.amount_usd), 0);
+  const found = claims.filter(c => c.status === "found").reduce((s, c) => s + Number(c.amount_usd), 0);
+  $("total").textContent = fmt(total);
+  $("sFound").textContent = fmt(found);
+  $("sApproved").textContent = fmt(total - found);
+  $("sIncidents").textContent = incidents.length;
+  const sla = claims.filter(c => c.source === "sla");
+  $("subline").textContent = sla.length
+    ? `${sla.length} SLA claim${sla.length>1?"s":""} across ${new Set(sla.map(c=>c.vendor_id)).size} vendors, backed by ${incidents.length} logged incidents.`
+    : "Service credits your vendors owe you under their own SLAs, plus unclaimed property held in your company's name.";
+
+  // claims table
+  const rows = sla.map(c => {
+    const e = c.evidence || {};
+    const demo = e.terms_verified === false ? `<span class="pill demo">demo terms</span>` : "";
+    return `<tr class="claim" data-id="${c.id}">
+      <td><div class="vendor">${vname(c.vendor_id)}</div><div class="period">${c.period || ""}</div></td>
+      <td class="uptime"><span class="bad">${e.uptime_pct != null ? Number(e.uptime_pct).toFixed(2) + "%" : "—"}</span> <span class="muted">vs ${e.sla_target ?? "—"}% SLA</span><br><span class="muted">${e.downtime_minutes ?? "—"} min down · ${(e.incidents||[]).length} incidents</span></td>
+      <td>${e.credit_pct != null ? e.credit_pct + "% credit" : ""} ${demo}</td>
+      <td><span class="pill ${c.status}">${c.status}</span></td>
+      <td class="amt">${fmt(c.amount_usd)}</td>
+      <td class="actions">${c.status === "found" ? `<button class="small" data-act="approve" data-id="${c.id}">Approve</button>` : c.status === "approved" ? `<button class="small ghost" data-act="file" data-id="${c.id}">Mark filed</button>` : ""}</td>
+    </tr>`;
+  }).join("");
+  $("claims").innerHTML = sla.length ? `<table><thead><tr><th>Vendor</th><th>Uptime</th><th>Credit</th><th>Status</th><th style="text-align:right">Owed</th><th></th></tr></thead><tbody>${rows}</tbody></table>`
+    : `<div class="empty">No claims yet. Run a scan.</div>`;
+
+  // unclaimed
+  const uc = claims.filter(c => c.source === "unclaimed");
+  if (uc.length) { $("ucAmt").textContent = fmt(uc.reduce((s,c)=>s+Number(c.amount_usd),0)); $("ucNote").innerHTML = uc.map(c => `${(c.evidence||{}).holder || "State record"} · <a href="${c.citation_url||"#"}" target="_blank">source</a>`).join("<br>"); }
+
+  // vendors
+  $("vendors").innerHTML = vendors.map(v => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)"><span style="color:var(--ink)">${v.name}</span><span class="uptime">${v.sla_target}% SLA · ${fmt(v.monthly_spend)}/mo</span></div>`).join("");
+
+  // runs
+  const r = runs[0];
+  if (r) {
+    $("runMeta").textContent = `${r.status} · ${new Date(r.started_at).toLocaleString()} · found ${fmt(r.found_usd)}`;
+    $("runlog").textContent = r.log || (r.status === "running" ? "Agent is working…" : "No log.");
+    $("dot").className = "dot" + (r.status === "running" ? " busy" : "");
+    $("agentState").textContent = r.status === "running" ? "Agent running" : "Agent idle · weekly scan Mon 9:00";
+  }
+}
+
+// realtime when Supabase is configured; otherwise poll the instance-backed store
+if (sb) sb.channel("owed").on("postgres_changes", { event: "*", schema: "public" }, () => load()).subscribe();
+else setInterval(load, 6000);
+
+// run now + live transcript
+let polling = null;
+$("runBtn").onclick = async () => {
+  $("runBtn").disabled = true; $("dot").className = "dot busy"; $("agentState").textContent = "Agent starting…";
+  $("term").innerHTML = `<span class="t">// firing weekly cron on Agent37…</span>\n`;
+  const r = await (await fetch("/api/run", { method: "POST" })).json();
+  const sid = r.session_id;
+  $("term").innerHTML += `<span class="ok">// run ${r.status || "triggered"} · session ${sid || "(pending)"}</span>\n`;
+  if (!sid) { $("runBtn").disabled = false; return; }
+  let seen = 0;
+  clearInterval(polling);
+  polling = setInterval(async () => {
+    const s = await (await fetch(`/api/session/${sid}`)).json();
+    const h = s.history || s.messages || [];
+    for (const m of h.slice(seen)) {
+      const role = m.role || m.type || "";
+      let text = typeof m.content === "string" ? m.content : JSON.stringify(m.content).slice(0, 400);
+      if (role === "user") continue;
+      $("term").innerHTML += `<span class="t">[${role}]</span> ${text.replace(/</g,"&lt;").slice(0, 600)}\n`;
+    }
+    seen = h.length; $("term").scrollTop = $("term").scrollHeight;
+    const done = s.status && s.status !== "in_progress" && s.status !== "running";
+    if (done || (runs[0] && runs[0].status !== "running" && seen > 2)) { clearInterval(polling); $("runBtn").disabled = false; load(); }
+  }, 4000);
+};
+
+// approve / file
+document.addEventListener("click", async (ev) => {
+  const b = ev.target.closest("button[data-act]");
+  if (b) { ev.stopPropagation(); b.disabled = true; await fetch(`/api/claims/${b.dataset.id}/${b.dataset.act}`, { method: "POST" }); return load(); }
+  const row = ev.target.closest("tr.claim");
+  if (row) openClaim(row.dataset.id);
+  if (ev.target.closest("#scrim,.close")) closeDrawer();
+});
+function openClaim(id) {
+  const c = claims.find(x => x.id === id); if (!c) return; const e = c.evidence || {};
+  $("drawer").innerHTML = `<button class="ghost small close">Close</button>
+    <div class="eyebrow">${vname(c.vendor_id)} · ${c.period || ""}</div>
+    <h3>${fmt(c.amount_usd)} owed</h3>
+    <div class="muted">${e.credit_pct}% service credit on ${fmt(e.monthly_spend)}/mo · <a href="${c.citation_url}" target="_blank">cited SLA clause ↗</a>${e.terms_verified === false ? " · demo terms" : ""}</div>
+    <div class="kv"><div>Measured uptime</div><div class="uptime"><span class="bad">${Number(e.uptime_pct).toFixed(3)}%</span> vs ${e.sla_target}% target</div>
+      <div>Downtime</div><div>${e.downtime_minutes} minutes across ${(e.incidents||[]).length} incidents</div>
+      <div>Status</div><div><span class="pill ${c.status}">${c.status}</span></div></div>
+    <div class="eyebrow">Evidence</div>
+    ${(e.incidents||[]).map(i => `<div class="inc"><div>${i.title || "Incident"}</div><div class="m">${(i.started_at||"").slice(0,16).replace("T"," ")} · ${i.minutes} min · <a href="${i.source_url||"#"}" target="_blank">source</a></div></div>`).join("")}
+    ${(e.degraded_not_counted||[]).length ? `<div class="muted" style="margin:8px 0 16px">${e.degraded_not_counted.length} degraded-performance incidents listed but not counted.</div>` : ""}
+    <div class="eyebrow" style="margin-top:18px">Claim drafted by the agent</div>
+    <div class="draft" style="margin-top:8px">${(c.draft||"").replace(/</g,"&lt;")}</div>
+    <div style="display:flex;gap:10px;margin-top:18px">${c.status === "found" ? `<button data-act="approve" data-id="${c.id}">Approve claim</button>` : c.status === "approved" ? `<button data-act="file" data-id="${c.id}">Mark filed</button>` : ""}<button class="ghost" onclick="navigator.clipboard.writeText(${JSON.stringify(c.draft||"")})">Copy draft</button></div>`;
+  $("drawer").classList.add("open"); $("scrim").classList.add("open");
+}
+function closeDrawer(){ $("drawer").classList.remove("open"); $("scrim").classList.remove("open"); }
+load();
+</script>
+</body>
+</html>

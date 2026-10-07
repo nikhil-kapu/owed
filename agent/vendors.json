@@ -1,0 +1,120 @@
+[
+ {
+  "id": "v-aws",
+  "name": "AWS",
+  "monthly_spend": 12000,
+  "sla_url": "https://aws.amazon.com/compute/sla/",
+  "status_url": "https://health.aws.amazon.com/health/status",
+  "sla_target": 99.99,
+  "sla_tiers": [
+   {
+    "below": 99.99,
+    "credit_pct": 10
+   },
+   {
+    "below": 99.0,
+    "credit_pct": 30
+   },
+   {
+    "below": 95.0,
+    "credit_pct": 100
+   }
+  ],
+  "terms_verified": true
+ },
+ {
+  "id": "v-twilio",
+  "name": "Twilio",
+  "monthly_spend": 4500,
+  "sla_url": "https://www.twilio.com/en-us/legal/service-level-agreement",
+  "status_url": "https://status.twilio.com",
+  "sla_target": 99.95,
+  "sla_tiers": [
+   {
+    "below": 99.95,
+    "credit_pct": 10
+   },
+   {
+    "below": 99.0,
+    "credit_pct": 25
+   }
+  ],
+  "terms_verified": false
+ },
+ {
+  "id": "v-datadog",
+  "name": "Datadog",
+  "monthly_spend": 6000,
+  "sla_url": "https://www.datadoghq.com/legal/service-level-agreement/",
+  "status_url": "https://status.datadoghq.com",
+  "sla_target": 99.9,
+  "sla_tiers": [
+   {
+    "below": 99.9,
+    "credit_pct": 10
+   },
+   {
+    "below": 99.0,
+    "credit_pct": 25
+   }
+  ],
+  "terms_verified": false
+ },
+ {
+  "id": "v-slack",
+  "name": "Slack",
+  "monthly_spend": 3200,
+  "sla_url": "https://slack.com/terms-of-service/service-level-agreement",
+  "status_url": "https://slack-status.com",
+  "sla_target": 99.99,
+  "sla_tiers": [
+   {
+    "below": 99.99,
+    "credit_pct": 10
+   },
+   {
+    "below": 99.0,
+    "credit_pct": 25
+   }
+  ],
+  "terms_verified": false
+ },
+ {
+  "id": "v-vercel",
+  "name": "Vercel",
+  "monthly_spend": 2500,
+  "sla_url": "https://vercel.com/legal/sla",
+  "status_url": "https://www.vercel-status.com",
+  "sla_target": 99.99,
+  "sla_tiers": [
+   {
+    "below": 99.99,
+    "credit_pct": 10
+   },
+   {
+    "below": 99.0,
+    "credit_pct": 25
+   }
+  ],
+  "terms_verified": false
+ },
+ {
+  "id": "v-github",
+  "name": "GitHub",
+  "monthly_spend": 2000,
+  "sla_url": "https://github.com/customer-terms/github-enterprise-service-level-agreement",
+  "status_url": "https://www.githubstatus.com",
+  "sla_target": 99.9,
+  "sla_tiers": [
+   {
+    "below": 99.9,
+    "credit_pct": 10
+   },
+   {
+    "below": 99.0,
+    "credit_pct": 25
+   }
+  ],
+  "terms_verified": false
+ }
+]
