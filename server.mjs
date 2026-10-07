@@ -1,9 +1,11 @@
-// Owed dashboard server: serves public/, proxies Agent37 (key stays server-side), approves claims.
-// Storage: Supabase when SUPABASE_URL is set; otherwise JSON files on the Agent37 instance (/workspace/owed/*.json).
+// Owed server: landing + per-customer dashboards. Each customer = one Agent37 instance + one weekly cron.
+// Storage: JSON files on each customer's Agent37 instance (/home/node/owed/*.json); the customer registry
+// and waitlist live on the primary (demo) instance. Keys never leave this server.
 import express from "express";
 import { readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { randomBytes } from "node:crypto";
 
 const here = dirname(fileURLToPath(import.meta.url));
 if (existsSync(join(here, ".env"))) {
@@ -12,137 +14,157 @@ if (existsSync(join(here, ".env"))) {
     if (m && !process.env[m[1]]) process.env[m[1]] = m[2].trim();
   }
 }
-
-const {
-  AGENT37_API_KEY, AGENT37_INSTANCE_ID, AGENT37_CRON_ID,
-  SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY,
-  PORT = 3000,
-} = process.env;
-const USE_SUPABASE = !!(SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY);
+const { AGENT37_API_KEY, AGENT37_INSTANCE_ID, AGENT37_CRON_ID, MONID_API_KEY, PORT = 3000 } = process.env;
 const RUN_MODEL = process.env.RUN_MODEL || "openai/gpt-5.4";
 const STORE = "/home/node/owed";
-
-const AGENT_URL = `https://${AGENT37_INSTANCE_ID}.agent37.app`;
 const HOST_URL = "https://api.agent37.com/v1";
+const agentUrl = (id) => `https://${id}.agent37.app`;
 const agentHeaders = { "X-Agent37-Key": AGENT37_API_KEY, "Content-Type": "application/json" };
 const hostHeaders = { Authorization: `Bearer ${AGENT37_API_KEY}`, "Content-Type": "application/json" };
-const sbHeaders = {
-  apikey: SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-  "Content-Type": "application/json", Prefer: "return=representation",
-};
+const prompt = () => readFileSync(join(here, "agent", "prompt.md"), "utf8");
 
-// ---- storage helpers
-async function sbGet(table, q = "") {
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=*${q}`, { headers: sbHeaders });
-  return r.ok ? r.json() : [];
+// ---- Agent37 helpers
+async function hostApi(path, body, method = "POST") {
+  const r = await fetch(`${HOST_URL}${path}`, { method, headers: hostHeaders, body: body ? JSON.stringify(body) : undefined });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(`${method} ${path} -> ${r.status} ${JSON.stringify(j).slice(0, 200)}`);
+  return j;
 }
-async function instRead(path) {
-  const r = await fetch(`${AGENT_URL}/v1/files/content?path=${encodeURIComponent(path)}`, { headers: agentHeaders });
-  if (!r.ok) return [];
-  try { return JSON.parse(await r.text()); } catch { return []; }
+async function instRead(id, path) {
+  const r = await fetch(`${agentUrl(id)}/v1/files/content?path=${encodeURIComponent(path)}`, { headers: agentHeaders });
+  if (!r.ok) return null;
+  try { return JSON.parse(await r.text()); } catch { return null; }
 }
-async function instExec(command) {
-  const r = await fetch(`${HOST_URL}/instances/${AGENT37_INSTANCE_ID}/exec`, { method: "POST", headers: hostHeaders, body: JSON.stringify({ command }) });
-  return r.json();
+async function instExec(id, command, user) {
+  return hostApi(`/instances/${id}/exec`, user ? { command, user } : { command });
 }
-export function buildPrompt() {
-  let p = readFileSync(join(here, "agent", "prompt.md"), "utf8");
-  if (!USE_SUPABASE) p += "\n\n" + readFileSync(join(here, "agent", "prompt-files.md"), "utf8");
-  return p;
+const pyWrite = (file, pyBody) => `python3 - <<'PY'\nimport json,os\np='${STORE}/${file}'\n${pyBody}\njson.dump(d,open(p+'.tmp','w'),indent=1); os.replace(p+'.tmp',p); print(len(d))\nPY`;
+
+// ---- customers (registry on the primary instance)
+let customers = null;
+async function loadCustomers() {
+  const c = await instRead(AGENT37_INSTANCE_ID, `${STORE}/customers.json`);
+  customers = c && !Array.isArray(c) ? c : {};
+  customers.demo ||= { slug: "demo", company: "Kafka Labs", instance_id: AGENT37_INSTANCE_ID, cron_id: AGENT37_CRON_ID, created_at: "2026-10-07T22:12:00Z" };
+  return customers;
+}
+async function cust(req) {
+  if (!customers) await loadCustomers();
+  const slug = String(req.query.c || "demo").replace(/[^a-z0-9-]/g, "");
+  const c = customers[slug];
+  if (!c) { const e = new Error("unknown customer"); e.status = 404; throw e; }
+  return c;
+}
+
+// ---- run a scan: the standing instructions as a streamed turn; return once the session exists
+async function startRun(c) {
+  const r = await fetch(`${agentUrl(c.instance_id)}/v1/responses`, {
+    method: "POST", headers: agentHeaders,
+    body: JSON.stringify({ input: prompt(), stream: true, model: RUN_MODEL, metadata: { job: "weekly-scan", customer: c.slug } }),
+  });
+  if (!r.ok) throw new Error(`run -> ${r.status} ${(await r.text()).slice(0, 200)}`);
+  const reader = r.body.getReader(); const dec = new TextDecoder();
+  let buf = "", created = null;
+  while (!created) {
+    const { value, done } = await reader.read(); if (done) break;
+    buf += dec.decode(value, { stream: true });
+    const m = buf.match(/event: response\.created\ndata: (.+)\n/);
+    if (m) created = JSON.parse(m[1]);
+  }
+  (async () => { try { while (!(await reader.read()).done) {} } catch {} })(); // keep the turn alive
+  return { status: "triggered", session_id: created?.session_id, response_id: created?.id, model: RUN_MODEL };
 }
 
 const app = express();
 app.use(express.json());
 app.use(express.static(join(here, "public")));
+const wrap = (fn) => (req, res) => fn(req, res).catch(e => res.status(e.status || 500).json({ error: String(e.message || e) }));
 
-app.get("/api/config", (_req, res) => {
-  res.json({ supabaseUrl: USE_SUPABASE ? SUPABASE_URL : "", supabaseAnonKey: USE_SUPABASE ? SUPABASE_ANON_KEY : "", instanceId: AGENT37_INSTANCE_ID, hasCron: !!AGENT37_CRON_ID, storage: USE_SUPABASE ? "supabase" : "instance-files" });
-});
+app.get("/api/config", wrap(async (req, res) => {
+  const c = await cust(req);
+  res.json({ slug: c.slug, company: c.company, instanceId: c.instance_id, hasCron: !!c.cron_id, storage: "instance-files", customers: Object.keys(customers).length });
+}));
 
-// Everything the dashboard needs in one call.
-app.get("/api/data", async (_req, res) => {
-  try {
-    if (USE_SUPABASE) {
-      const [vendors, claims, incidents, runs] = await Promise.all([sbGet("vendors"), sbGet("claims"), sbGet("incidents"), sbGet("runs", "&order=started_at.desc&limit=10")]);
-      return res.json({ vendors, claims, incidents, runs });
-    }
-    const [vendors, claims, incidents, runs, vendor_status] = await Promise.all(["vendors", "claims", "incidents", "runs", "vendor_status"].map(n => instRead(`${STORE}/${n}.json`)));
-    res.json({ vendors, claims, incidents, runs, vendor_status: Array.isArray(vendor_status) ? {} : vendor_status });
-  } catch (e) { res.status(500).json({ error: String(e) }); }
-});
+app.get("/api/data", wrap(async (req, res) => {
+  const c = await cust(req);
+  const [vendors, claims, incidents, runs, vendor_status] = await Promise.all(["vendors", "claims", "incidents", "runs", "vendor_status"].map(n => instRead(c.instance_id, `${STORE}/${n}.json`)));
+  res.json({ vendors: vendors || [], claims: claims || [], incidents: incidents || [], runs: runs || [], vendor_status: vendor_status && !Array.isArray(vendor_status) ? vendor_status : {} });
+}));
 
-// Fire this week's scan now: the standing instructions as a streamed turn on OpenAI (via Agent37's
-// router), returning as soon as the session exists. RUN_VIA_CRON=1 fires the weekly cron instead.
-app.post("/api/run", async (_req, res) => {
-  try {
-    if (AGENT37_CRON_ID && process.env.RUN_VIA_CRON === "1") {
-      const r = await fetch(`${HOST_URL}/instances/${AGENT37_INSTANCE_ID}/crons/${AGENT37_CRON_ID}/run`, { method: "POST", headers: hostHeaders });
-      return res.status(r.status).json(await r.json());
-    }
-    const r = await fetch(`${AGENT_URL}/v1/responses`, {
-      method: "POST", headers: agentHeaders,
-      body: JSON.stringify({ input: buildPrompt(), stream: true, model: RUN_MODEL, metadata: { job: "weekly-scan" } }),
-    });
-    const reader = r.body.getReader();
-    const dec = new TextDecoder();
-    let buf = "", created = null;
-    while (!created) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      buf += dec.decode(value, { stream: true });
-      const m = buf.match(/event: response\.created\ndata: (.+)\n/);
-      if (m) created = JSON.parse(m[1]);
-    }
-    (async () => { try { while (!(await reader.read()).done) {} } catch {} })(); // keep the turn alive
-    res.json({ status: "triggered", session_id: created?.session_id, response_id: created?.id, model: RUN_MODEL });
-  } catch (e) { res.status(500).json({ error: String(e) }); }
-});
+app.post("/api/run", wrap(async (req, res) => res.json(await startRun(await cust(req)))));
 
-// Live event stream of a running turn (re-attachable SSE passthrough) for the dashboard's activity feed.
-app.get("/api/stream/:responseId", async (req, res) => {
-  try {
-    const r = await fetch(`${AGENT_URL}/v1/responses/${req.params.responseId}/stream`, { headers: agentHeaders });
-    res.setHeader("Content-Type", "text/event-stream"); res.setHeader("Cache-Control", "no-cache"); res.flushHeaders?.();
-    const reader = r.body.getReader(); const dec = new TextDecoder();
-    req.on("close", () => reader.cancel().catch(() => {}));
-    for (;;) { const { value, done } = await reader.read(); if (done) break; res.write(dec.decode(value)); }
-  } catch {}
+app.get("/api/stream/:responseId", wrap(async (req, res) => {
+  const c = await cust(req);
+  const r = await fetch(`${agentUrl(c.instance_id)}/v1/responses/${req.params.responseId}/stream`, { headers: agentHeaders });
+  res.setHeader("Content-Type", "text/event-stream"); res.setHeader("Cache-Control", "no-cache"); res.flushHeaders?.();
+  const reader = r.body.getReader(); const dec = new TextDecoder();
+  req.on("close", () => reader.cancel().catch(() => {}));
+  try { for (;;) { const { value, done } = await reader.read(); if (done) break; res.write(dec.decode(value)); } } catch {}
   res.end();
-});
+}));
 
-// The weekly cron, straight from Agent37 (proves the schedule is real).
-app.get("/api/cron", async (_req, res) => {
-  try {
-    if (!AGENT37_CRON_ID) return res.json({});
-    const [c, r] = await Promise.all([
-      fetch(`${HOST_URL}/instances/${AGENT37_INSTANCE_ID}/crons/${AGENT37_CRON_ID}`, { headers: hostHeaders }).then(x => x.json()),
-      fetch(`${HOST_URL}/instances/${AGENT37_INSTANCE_ID}/crons/${AGENT37_CRON_ID}/runs`, { headers: hostHeaders }).then(x => x.json()).catch(() => ({})),
-    ]);
-    res.json({ id: c.id, name: c.name, schedule: c.schedule, timezone: c.timezone, enabled: c.enabled, next_run: c.next_run, last_run: c.last_run, runs: (r.data || []).slice(0, 5) });
-  } catch (e) { res.status(500).json({ error: String(e) }); }
-});
+app.get("/api/cron", wrap(async (req, res) => {
+  const c = await cust(req);
+  if (!c.cron_id) return res.json({});
+  const [k, r] = await Promise.all([
+    hostApi(`/instances/${c.instance_id}/crons/${c.cron_id}`, null, "GET"),
+    hostApi(`/instances/${c.instance_id}/crons/${c.cron_id}/runs`, null, "GET").catch(() => ({})),
+  ]);
+  res.json({ id: k.id, name: k.name, schedule: k.schedule, timezone: k.timezone, enabled: k.enabled, next_run: k.next_run, last_run: k.last_run, runs: (r.data || []).slice(0, 5) });
+}));
 
-// Session transcript (audit trail) proxied from the instance.
-app.get("/api/session/:id", async (req, res) => {
-  try {
-    const r = await fetch(`${AGENT_URL}/v1/sessions/${req.params.id}`, { headers: agentHeaders });
-    res.status(r.status).json(await r.json());
-  } catch (e) { res.status(500).json({ error: String(e) }); }
-});
+app.get("/api/session/:id", wrap(async (req, res) => {
+  const c = await cust(req);
+  const r = await fetch(`${agentUrl(c.instance_id)}/v1/sessions/${req.params.id}`, { headers: agentHeaders });
+  res.status(r.status).json(await r.json());
+}));
 
-// One-click approval. Status: found -> approved -> filed.
-app.post("/api/claims/:id/:action", async (req, res) => {
+// One-click approval. found -> approved -> filed.
+app.post("/api/claims/:id/:action", wrap(async (req, res) => {
+  const c = await cust(req);
   const status = { approve: "approved", file: "filed", reset: "found" }[req.params.action];
   if (!status) return res.status(400).json({ error: "bad action" });
   const id = req.params.id.replace(/[^a-zA-Z0-9-]/g, "");
-  if (USE_SUPABASE) {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/claims?id=eq.${id}`, { method: "PATCH", headers: sbHeaders, body: JSON.stringify({ status }) });
-    return res.status(r.status).json(await r.json());
-  }
-  const py = `import json;p='${STORE}/claims.json';d=json.load(open(p));[c.update(status='${status}') for c in d if c.get('id')=='${id}'];json.dump(d,open(p+'.tmp','w'),indent=1);import os;os.replace(p+'.tmp',p);print('ok')`;
-  const out = await instExec(`python3 -c "${py.replace(/"/g, '\\"')}"`);
-  res.json({ ok: out.exit_code === 0, out: out.stdout, err: out.stderr });
-});
+  const out = await instExec(c.instance_id, pyWrite("claims.json", `d=json.load(open(p))\n[x.update(status='${status}') for x in d if x.get('id')=='${id}']`));
+  res.json({ ok: out.exit_code === 0, status });
+}));
 
-app.get("/healthz", (_req, res) => res.json({ ok: true, storage: USE_SUPABASE ? "supabase" : "instance-files" }));
-app.listen(PORT, () => console.log(`Owed dashboard on :${PORT} (instance ${AGENT37_INSTANCE_ID}, storage ${USE_SUPABASE ? "supabase" : "instance-files"})`));
+// Sign up: company + email -> their own Agent37 instance, vendors, Monid, weekly cron, first scan.
+app.post("/api/signup", wrap(async (req, res) => {
+  const company = String(req.body.company || "").trim().slice(0, 80);
+  const email = String(req.body.email || "").trim().slice(0, 120);
+  if (!company || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return res.status(400).json({ error: "Company and a valid work email are required." });
+  if (!customers) await loadCustomers();
+  const slug = company.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 24) + "-" + randomBytes(2).toString("hex");
+
+  // 1. The customer's own computer, with a spend cap.
+  const inst = await hostApi("/instances", { template: "agent37-hermes", name: `owed-${slug}`, budget: { credit_micros: 2_000_000, monthly_cap_micros: 10_000_000 } });
+  // 2. Seed the vendor list (SLA terms from sla_terms.json) and empty stores; Monid CLI installs in the background.
+  const vendors = readFileSync(join(here, "agent", "vendors.json"), "utf8");
+  await instExec(inst.id, `mkdir -p ${STORE} && cd ${STORE} && cat > vendors.json <<'JSON'\n${vendors}\nJSON\nfor f in incidents claims runs; do echo '[]' > $f.json; done; echo '{}' > vendor_status.json; echo seeded`);
+  if (MONID_API_KEY) instExec(inst.id, `nohup sh -c 'npm i -g @monid-ai/cli && export PATH=/home/node/.npm-global/bin:$PATH && monid keys add --label main --key ${MONID_API_KEY} && monid keys activate --label main' >/tmp/monid.log 2>&1 &`).catch(() => {});
+  // 3. The job it owns from now on.
+  const cron = await hostApi(`/instances/${inst.id}/crons`, { name: "Owed weekly recovery scan", prompt: prompt(), schedule: "0 9 * * 1", timezone: "America/Los_Angeles" });
+  // 4. Register, then kick off the first scan.
+  const c = { slug, company, email, instance_id: inst.id, cron_id: cron.id, created_at: new Date().toISOString() };
+  customers[slug] = c;
+  await instExec(AGENT37_INSTANCE_ID, pyWrite("customers.json", `d=json.load(open(p)) if os.path.exists(p) and os.path.getsize(p)>2 else {}\nd[${JSON.stringify(slug)}]=json.loads(${JSON.stringify(JSON.stringify(c))})`));
+  let run = {}; try { run = await startRun(c); } catch (e) { run = { run_error: String(e.message || e) }; }
+  res.json({ slug, company, instance_id: inst.id, instance_url: inst.url, cron_id: cron.id, ...run });
+}));
+
+app.post("/api/waitlist", wrap(async (req, res) => {
+  const email = String(req.body.email || "").trim().slice(0, 120);
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return res.status(400).json({ error: "Enter a valid email." });
+  const entry = { email, company: String(req.body.company || "").slice(0, 80), created_at: new Date().toISOString() };
+  const out = await instExec(AGENT37_INSTANCE_ID, pyWrite("waitlist.json", `d=json.load(open(p)) if os.path.exists(p) and os.path.getsize(p)>2 else []\nd.append(json.loads(${JSON.stringify(JSON.stringify(entry))}))`));
+  res.json({ ok: out.exit_code === 0, position: parseInt(out.stdout) || null });
+}));
+
+app.get("/api/customers", wrap(async (_req, res) => {
+  if (!customers) await loadCustomers();
+  res.json({ count: Object.keys(customers).length, customers: Object.values(customers).map(({ slug, company, instance_id, created_at }) => ({ slug, company, instance_id, created_at })) });
+}));
+
+app.get("/healthz", (_req, res) => res.json({ ok: true, storage: "instance-files" }));
+app.listen(PORT, () => console.log(`Owed on :${PORT} (primary instance ${AGENT37_INSTANCE_ID})`));

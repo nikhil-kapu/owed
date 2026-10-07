@@ -9,17 +9,17 @@
 <style>
   :root{
     --ink:#101010; --ink-2:#4a4a4a; --ink-3:#8a8a8a; --line:#e6e6e6; --paper:#ffffff; --wash:#f6f6f4;
-    --yellow:#FFD60A; --yellow-ink:#8a6d00; --green:#157347; --green-wash:#e8f5ee; --red:#b42318; --red-wash:#fdecec;
+    --yellow:#FFD60A; --yellow-ink:#8a6d00; --green:#157347; --green-wash:#e8f5ee; --red:#b42318;
     --mono:'JetBrains Mono',ui-monospace,Menlo,monospace; --sans:'Inter',system-ui,sans-serif; --display:'Inter Tight','Inter',system-ui,sans-serif;
   }
   *{box-sizing:border-box} html,body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5}
-  a{color:inherit}
+  a{color:inherit} [hidden]{display:none!important}
   .wrap{max-width:1180px;margin:0 auto;padding:0 24px}
-  header{display:flex;align-items:center;justify-content:space-between;padding:22px 0;border-bottom:1px solid var(--line)}
-  .brand{display:flex;align-items:baseline;gap:14px}
+  header{display:flex;align-items:center;justify-content:space-between;padding:22px 0;border-bottom:1px solid var(--line);gap:16px}
+  .brand{display:flex;align-items:baseline;gap:14px;min-width:0}
   .wordmark{font-family:var(--display);font-weight:800;font-size:26px;letter-spacing:-0.03em}
-  .tag{color:var(--ink-2);font-size:14px}
-  .status{display:flex;align-items:center;gap:16px;font-size:13px;color:var(--ink-2)}
+  .tag{color:var(--ink-2);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .status{display:flex;align-items:center;gap:12px;font-size:13px;color:var(--ink-2)}
   .dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;margin-right:7px;box-shadow:0 0 0 3px var(--green-wash)}
   .dot.busy{background:var(--yellow);box-shadow:0 0 0 3px #fff6c2;animation:pulse 1s infinite}
   @keyframes pulse{50%{opacity:.4}}
@@ -28,16 +28,26 @@
   button.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
   button.small{padding:6px 10px;font-size:13px;border-radius:6px}
   button:disabled{opacity:.5;cursor:default}
+  input{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:8px;width:100%;background:#fff}
+  input:focus{outline:2px solid var(--yellow);border-color:var(--yellow)}
+  label{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);font-weight:600;margin:12px 0 6px}
+  .wl{display:flex;gap:8px;align-items:center}
+  .wl input{width:220px;padding:8px 10px}
 
   .hero{display:grid;grid-template-columns:1.4fr 1fr;gap:40px;padding:56px 0 40px;align-items:end}
+  .hero.landing{align-items:start;padding:64px 0 48px}
   .eyebrow{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
   .big{font-family:var(--display);font-weight:800;font-size:clamp(64px,9vw,120px);line-height:.95;letter-spacing:-0.045em;margin:10px 0 6px}
+  .big.h{font-size:clamp(46px,6.5vw,84px)}
   .big .mark{background:linear-gradient(transparent 55%,var(--yellow) 55%)}
-  .sub{font-size:18px;color:var(--ink-2);max-width:520px}
-  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .sub{font-size:18px;color:var(--ink-2);max-width:560px}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:12px;overflow:hidden}
   .stat{padding:18px 20px;border-right:1px solid var(--line)} .stat:last-child{border-right:0}
   .stat b{display:block;font-family:var(--display);font-size:28px;font-weight:700;letter-spacing:-0.02em}
   .stat span{font-size:13px;color:var(--ink-3)}
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;padding:8px 0 48px}
+  .step b{display:block;font-family:var(--display);font-size:17px;margin-bottom:4px}
+  .step{color:var(--ink-2);font-size:14px}
 
   section{padding:28px 0;border-top:1px solid var(--line)}
   .sec-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px}
@@ -80,67 +90,96 @@
   .two{display:grid;grid-template-columns:1fr 1fr;gap:24px}
   .card{border:1px solid var(--line);border-radius:12px;padding:20px}
   .card h4{margin:0 0 8px;font-family:var(--display);font-size:17px;letter-spacing:-0.01em}
-  .unclaimed .amt{text-align:left;font-size:34px}
+  .unclaimed .amt{text-align:left;font-size:30px}
   footer{padding:36px 0 60px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;color:var(--ink-2);font-size:14px}
   footer b{color:var(--ink)}
   .logos{display:flex;gap:14px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;color:var(--ink-3)}
-  @media (max-width:860px){.hero,.run,.two{grid-template-columns:1fr}.stats{grid-template-columns:1fr}.stat{border-right:0;border-bottom:1px solid var(--line)}}
+  @media (max-width:860px){.hero,.run,.two,.steps{grid-template-columns:1fr}.stats{grid-template-columns:1fr}.stat{border-right:0;border-bottom:1px solid var(--line)}.tag{display:none}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <div class="brand"><span class="wordmark">Owed</span><span class="tag">Money your company is owed. Found weekly, filed on approval.</span></div>
+    <div class="brand"><a href="/" style="text-decoration:none"><span class="wordmark">Owed</span></a><span class="tag" id="tag">Money your company is owed. Found weekly, filed on approval.</span></div>
     <div class="status">
-      <span><span class="dot" id="dot"></span><span id="agentState">Agent idle · weekly scan Mon 9:00</span></span>
-      <button class="primary" id="runBtn">Run scan now</button>
+      <span id="agentWrap" hidden><span class="dot" id="dot"></span><span id="agentState">Agent idle</span></span>
+      <span class="wl" id="wl"><button class="ghost" id="wlBtn">Join waitlist</button></span>
+      <button class="primary" id="runBtn" hidden>Run scan now</button>
     </div>
   </header>
 
-  <div class="hero">
-    <div>
-      <div class="eyebrow">Owed to you right now</div>
-      <div class="big"><span class="mark" id="total">$0</span></div>
-      <div class="sub" id="subline">Service credits your vendors owe you under their own SLAs, plus unclaimed property held in your company's name.</div>
+  <!-- Landing: step 1 is signing up -->
+  <div id="landing" hidden>
+    <div class="hero landing">
+      <div>
+        <div class="eyebrow">For finance and ops leads</div>
+        <div class="big h">Your vendors <span class="mark">owe you</span> money.</div>
+        <div class="sub">Every SaaS contract promises service credits when the vendor misses its SLA. Almost nobody claims them. Owed gives your company its own agent that checks every vendor weekly, proves the credit with citations, and files the claim when you approve.</div>
+        <div style="margin-top:16px;color:var(--ink-2)"><b style="color:var(--ink)">Free until it recovers money. We keep 25%.</b></div>
+      </div>
+      <form id="signup" class="card" autocomplete="on">
+        <h4>Create your agent</h4>
+        <label for="company">Company</label><input id="company" name="company" required placeholder="Acme Inc" maxlength="80">
+        <label for="email">Work email</label><input id="email" name="email" type="email" required placeholder="you@acme.com" maxlength="120">
+        <div style="margin-top:16px"><button class="primary" type="submit" id="signupBtn" style="width:100%">Create my agent</button></div>
+        <div class="muted" id="signupStatus" style="margin-top:12px">No password. Provisioning takes about 20 seconds: an isolated Agent37 instance, your vendor list, and a weekly scan.</div>
+        <div class="muted" style="margin-top:10px"><a href="/?c=demo">See the live demo account →</a></div>
+      </form>
     </div>
-    <div class="stats">
-      <div class="stat"><b id="sFound">$0</b><span>found, awaiting approval</span></div>
-      <div class="stat"><b id="sApproved">$0</b><span>approved / filed</span></div>
-      <div class="stat"><b id="sIncidents">0</b><span>incidents on record</span></div>
+    <div class="steps">
+      <div class="step"><b>1. Your own agent</b>One Agent37 instance per customer. It keeps the ledger on its own disk and runs every Monday on a cron.</div>
+      <div class="step"><b>2. Proof, not guesses</b>Every claim cites the vendor's own status page and the SLA clause. Degraded, regional and third-party incidents are listed but never counted.</div>
+      <div class="step"><b>3. You approve, it files</b>The claim email is drafted to the vendor's published process. Nothing goes out without one click from you.</div>
     </div>
   </div>
 
-  <section>
-    <div class="sec-head"><h2>This week's scan</h2><span class="muted" id="runMeta">No runs yet</span></div>
-    <div class="muted" id="cronLine" style="margin:-6px 0 14px">Loading schedule…</div>
-    <div class="run">
-      <div class="term" id="term"><span class="t">// Agent37 instance <span id="instId"></span>. Press "Run scan now" to fire the weekly cron and watch the agent work.</span></div>
-      <div class="runlog" id="runlog">Latest run log will appear here.</div>
-    </div>
-  </section>
-
-  <section>
-    <div class="sec-head"><h2>Claims</h2><span class="muted">Every claim cites the incident and the SLA clause. Nothing is filed without your approval.</span></div>
-    <div id="claims"></div>
-  </section>
-
-  <section>
-    <div class="two">
-      <div class="card unclaimed">
-        <h4>Unclaimed property <span class="pill demo" style="margin-left:6px;vertical-align:middle">Beta</span></h4>
-        <div class="amt" id="ucAmt">—</div>
-        <div class="muted" id="ucNote">State unclaimed-property databases searched for the company and its founders.</div>
+  <!-- Dashboard -->
+  <div id="dash" hidden>
+    <div class="hero">
+      <div>
+        <div class="eyebrow">Owed to you right now</div>
+        <div class="big"><span class="mark" id="total">$0</span></div>
+        <div class="sub" id="subline">Service credits your vendors owe you under their own SLAs.</div>
       </div>
-      <div class="card">
-        <h4>Vendors watched</h4>
-        <div id="vendors" class="muted">Loading…</div>
+      <div class="stats">
+        <div class="stat"><b id="sFound">$0</b><span>found, awaiting approval</span></div>
+        <div class="stat"><b id="sApproved">$0</b><span>approved / filed</span></div>
+        <div class="stat"><b id="sIncidents">0</b><span>counted incidents on record</span></div>
       </div>
     </div>
-  </section>
+
+    <section>
+      <div class="sec-head"><h2>This week's scan</h2><span class="muted" id="runMeta">No runs yet</span></div>
+      <div class="muted" id="cronLine" style="margin:-6px 0 14px">Loading schedule…</div>
+      <div class="run">
+        <div class="term" id="term"><span class="t">// Agent37 instance <span id="instId"></span>. Press "Run scan now" to run the standing instructions and watch the agent work.</span></div>
+        <div class="runlog" id="runlog">Latest run log will appear here.</div>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head"><h2>Claims</h2><span class="muted">Every claim cites the incident and the SLA clause. Nothing is filed without your approval.</span></div>
+      <div id="claims"></div>
+    </section>
+
+    <section>
+      <div class="two">
+        <div class="card unclaimed">
+          <h4>Unclaimed property <span class="pill demo" style="margin-left:6px;vertical-align:middle">Beta</span></h4>
+          <div class="amt" id="ucAmt">—</div>
+          <div class="muted" id="ucNote">State unclaimed-property databases searched for the company and its founders.</div>
+        </div>
+        <div class="card">
+          <h4>Vendors watched</h4>
+          <div id="vendors" class="muted">Loading…</div>
+        </div>
+      </div>
+    </section>
+  </div>
 
   <footer>
     <div><b>Free until it recovers money. We keep 25%.</b><br>For finance and ops leads at 20–500 person companies paying 10+ SaaS and infra vendors. Each customer gets their own agent, on its own computer, on a weekly schedule.</div>
-    <div class="logos"><span>Agent37</span><span>OpenAI</span><span>Supabase</span><span>Monid</span><span>InstaCloud</span></div>
+    <div class="logos"><span>Agent37</span><span>OpenAI</span><span>Monid</span><span>InstaCloud</span></div>
   </footer>
 </div>
 
@@ -148,16 +187,76 @@
 <aside class="drawer" id="drawer"></aside>
 
 <script type="module">
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 const $ = (id) => document.getElementById(id);
 const fmt = (n) => "$" + Math.round(Number(n||0)).toLocaleString();
-const cfg = await (await fetch("/api/config")).json();
-$("instId").textContent = cfg.instanceId || "";
-const sb = cfg.supabaseUrl ? createClient(cfg.supabaseUrl, cfg.supabaseAnonKey) : null;
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));
+const params = new URLSearchParams(location.search);
+const slug = (params.get("c") || "").replace(/[^a-z0-9-]/g, "");
+const q = slug ? `?c=${encodeURIComponent(slug)}` : "";
 
-let vendors = [], claims = [], incidents = [], runs = [], vendorStatus = {};
+// ---- waitlist (header)
+$("wlBtn").onclick = () => {
+  $("wl").innerHTML = `<input id="wlEmail" type="email" placeholder="you@company.com"><button class="small" id="wlGo">Join</button>`;
+  $("wlEmail").focus();
+  $("wlGo").onclick = async () => {
+    const email = $("wlEmail").value.trim(); if (!email) return;
+    $("wlGo").disabled = true;
+    const r = await (await fetch("/api/waitlist", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) })).json();
+    $("wl").innerHTML = r.ok ? `<span class="muted">You're on the list${r.position ? " · #" + r.position : ""} ✓</span>` : `<span class="muted">${esc(r.error || "Try again")}</span>`;
+  };
+};
+
+// ---- landing (no customer selected)
+if (!slug) {
+  $("landing").hidden = false;
+  $("signup").onsubmit = async (ev) => {
+    ev.preventDefault();
+    const company = $("company").value.trim(), email = $("email").value.trim();
+    $("signupBtn").disabled = true; $("signupBtn").textContent = "Provisioning…";
+    const steps = ["Creating an isolated Agent37 instance for " + company + "…", "Seeding your vendor list and SLA terms…", "Installing tools and scheduling the weekly scan (Mon 9:00 PT)…", "Starting your first scan…"];
+    let i = 0; $("signupStatus").textContent = steps[0];
+    const tick = setInterval(() => { if (i < steps.length - 1) $("signupStatus").textContent = steps[++i]; }, 6000);
+    try {
+      const r = await (await fetch("/api/signup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ company, email }) })).json();
+      clearInterval(tick);
+      if (r.error) throw new Error(r.error);
+      $("signupStatus").textContent = `Done. Instance ${r.instance_id} · cron ${r.cron_id}. Opening your dashboard…`;
+      location.href = `/?c=${encodeURIComponent(r.slug)}${r.response_id ? "&run=" + r.response_id : ""}`;
+    } catch (e) {
+      clearInterval(tick); $("signupBtn").disabled = false; $("signupBtn").textContent = "Create my agent";
+      $("signupStatus").textContent = "Couldn't provision: " + e.message;
+    }
+  };
+} else {
+  $("dash").hidden = false; $("runBtn").hidden = false; $("agentWrap").hidden = false;
+  boot();
+}
+
+// ---- dashboard
+let vendors = [], claims = [], incidents = [], runs = [], vendorStatus = {}, cfg = {};
+async function boot() {
+  cfg = await (await fetch("/api/config" + q)).json();
+  if (cfg.error) { $("dash").innerHTML = `<div class="empty" style="margin:40px 0">Unknown customer. <a href="/">Sign up</a> or <a href="/?c=demo">see the demo</a>.</div>`; return; }
+  $("tag").textContent = `${cfg.company} · agent ${cfg.instanceId}`;
+  $("instId").textContent = cfg.instanceId || "";
+  document.title = `Owed · ${cfg.company}`;
+  loadCron();
+  await load();
+  setInterval(load, 6000);
+  const rid = params.get("run");
+  if (rid) { $("term").innerHTML = `<span class="ok">// first scan running on your new agent (GPT-5.4 via Agent37)…</span>\n`; attachFeed(rid); }
+}
+async function loadCron() {
+  try {
+    const c = await (await fetch("/api/cron" + q)).json();
+    if (!c.id) return;
+    const next = c.next_run ? new Date(c.next_run * 1000).toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "—";
+    $("cronLine").innerHTML = `Agent37 cron <span class="uptime">${esc(c.id)}</span> · “${esc(c.name)}” · <span class="uptime">${esc(c.schedule)}</span> ${esc(c.timezone)} · next run ${next} · ${c.enabled ? "enabled" : "paused"}`;
+    $("agentState").textContent = `Agent idle · next scan ${next}`;
+  } catch {}
+}
 async function load() {
-  const d = await (await fetch("/api/data")).json();
+  const d = await (await fetch("/api/data" + q)).json();
   vendorStatus = d.vendor_status || {};
   vendors = (d.vendors || []).sort((a, b) => b.monthly_spend - a.monthly_spend);
   claims = (d.claims || []).sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
@@ -167,104 +266,86 @@ async function load() {
 }
 function vname(id) { return vendors.find(v => v.id === id)?.name || "—"; }
 function render() {
-  const total = claims.reduce((s, c) => s + Number(c.amount_usd), 0);
-  const found = claims.filter(c => c.status === "found").reduce((s, c) => s + Number(c.amount_usd), 0);
+  const sla = claims.filter(c => c.source === "sla");
+  const total = sla.reduce((s, c) => s + Number(c.amount_usd), 0);
+  const found = sla.filter(c => c.status === "found").reduce((s, c) => s + Number(c.amount_usd), 0);
   $("total").textContent = fmt(total);
   $("sFound").textContent = fmt(found);
   $("sApproved").textContent = fmt(total - found);
   $("sIncidents").textContent = incidents.length;
-  const sla = claims.filter(c => c.source === "sla");
   $("subline").textContent = sla.length
-    ? `${sla.length} SLA claim${sla.length>1?"s":""} across ${new Set(sla.map(c=>c.vendor_id)).size} vendors, backed by ${incidents.length} logged incidents.`
-    : "Service credits your vendors owe you under their own SLAs, plus unclaimed property held in your company's name.";
+    ? `${sla.length} SLA claim${sla.length>1?"s":""} across ${new Set(sla.map(c=>c.vendor_id)).size} vendors, backed by ${incidents.length} counted incidents from the vendors' own status pages.`
+    : (runs.length ? "No qualifying SLA credits in the last three months. The agent keeps watching." : "Service credits your vendors owe you under their own SLAs.");
 
-  // claims table
   const rows = sla.map(c => {
     const e = c.evidence || {};
     const demo = e.terms_verified === false ? `<span class="pill demo">demo terms</span>` : "";
-    return `<tr class="claim" data-id="${c.id}">
-      <td><div class="vendor">${vname(c.vendor_id)}</div><div class="period">${c.period || ""}</div></td>
+    return `<tr class="claim" data-id="${esc(c.id)}">
+      <td><div class="vendor">${esc(vname(c.vendor_id))}</div><div class="period">${esc(c.period || "")}</div></td>
       <td class="uptime"><span class="bad">${e.uptime_pct != null ? Number(e.uptime_pct).toFixed(2) + "%" : "—"}</span> <span class="muted">vs ${e.sla_target ?? "—"}% SLA${e.provisional ? " · provisional" : ""}</span><br><span class="muted">${e.downtime_minutes ?? "—"} min down · ${(e.incidents||[]).length} counted · ${(e.not_counted||[]).length} not counted</span></td>
       <td>${e.credit_pct != null ? e.credit_pct + "% credit" : ""} ${demo}</td>
-      <td><span class="pill ${c.status}">${c.status}</span></td>
+      <td><span class="pill ${esc(c.status)}">${esc(c.status)}</span></td>
       <td class="amt">${fmt(c.amount_usd)}</td>
-      <td class="actions">${c.status === "found" ? `<button class="small" data-act="approve" data-id="${c.id}">Approve</button>` : c.status === "approved" ? `<button class="small ghost" data-act="file" data-id="${c.id}">Mark filed</button>` : ""}</td>
+      <td class="actions">${c.status === "found" ? `<button class="small" data-act="approve" data-id="${esc(c.id)}">Approve</button>` : c.status === "approved" ? `<button class="small ghost" data-act="file" data-id="${esc(c.id)}">Mark filed</button>` : ""}</td>
     </tr>`;
   }).join("");
   $("claims").innerHTML = sla.length ? `<table><thead><tr><th>Vendor</th><th>Uptime</th><th>Credit</th><th>Status</th><th style="text-align:right">Owed</th><th></th></tr></thead><tbody>${rows}</tbody></table>`
-    : `<div class="empty">No claims yet. Run a scan.</div>`;
+    : `<div class="empty">${runs.some(r => r.status === "running") || params.get("run") ? "First scan in progress. Claims appear here when it finishes." : "No claims yet. Run a scan."}</div>`;
 
-  // unclaimed
   const uc = claims.filter(c => c.source === "unclaimed");
   if (uc.length) {
     const amt = uc.reduce((s,c)=>s+Number(c.amount_usd),0);
     const e = uc[0].evidence || {};
     const dbs = (e.searched || []).filter(s => /state controller|delaware|missingmoney/i.test(s.source || "")).length || 3;
     $("ucAmt").textContent = amt > 0 ? fmt(amt) : `Checked ${dbs} state databases`;
-    $("ucNote").innerHTML = (e.searched || []).map(s => `<div style="display:flex;gap:10px;padding:5px 0;border-bottom:1px solid var(--line)"><span style="color:var(--ink);min-width:150px">${s.source}</span><span>${s.result}</span></div>`).join("")
-      + (e.notes ? `<div style="margin-top:8px">${e.notes}</div>` : "");
-  }
+    $("ucNote").innerHTML = (e.searched || []).map(s => `<div style="display:flex;gap:10px;padding:5px 0;border-bottom:1px solid var(--line)"><span style="color:var(--ink);min-width:150px">${esc(s.source)}</span><span>${esc(s.result)}</span></div>`).join("") + (e.notes ? `<div style="margin-top:8px">${esc(e.notes)}</div>` : "");
+  } else { $("ucAmt").textContent = "Not run yet"; }
 
-  // vendors + status from the last run
   $("vendors").innerHTML = vendors.map(v => {
     const st = (vendorStatus || {})[v.id] || {};
     const terms = v.sla_target ? `${v.sla_target}% / ${v.period || "month"}` : "no public SLA";
-    const line = st.status === "claim" ? `claim: ${Number(st.worst_uptime_pct).toFixed(2)}% in ${st.worst_period}`
-      : st.status === "within_sla" ? `within SLA` : st.status === "sla_missed_no_credit" ? `SLA missed · ${v.note}`
-      : st.status === "no_public_credits" ? v.note : st.status === "no_data" ? "no reliable incident data" : (v.note || "");
-    return `<div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--line)"><span style="color:var(--ink);min-width:70px">${v.name}</span><span style="flex:1;color:var(--ink-2);font-size:13px">${line}</span><span class="uptime" style="white-space:nowrap">${terms} · ${fmt(v.monthly_spend)}/mo</span></div>`;
+    const line = st.status === "claim" ? `claim: ${Number(st.worst_uptime_pct).toFixed(2)}% in ${esc(st.worst_period)}`
+      : st.status === "within_sla" ? `within SLA` : st.status === "sla_missed_no_credit" ? `SLA missed · ${esc(v.note)}`
+      : st.status === "no_public_credits" ? esc(v.note) : st.status === "no_data" ? "no public per-account incident feed" : esc(v.note || "");
+    return `<div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--line)"><span style="color:var(--ink);min-width:70px">${esc(v.name)}</span><span style="flex:1;color:var(--ink-2);font-size:13px">${line}</span><span class="uptime" style="white-space:nowrap">${terms} · ${fmt(v.monthly_spend)}/mo</span></div>`;
   }).join("");
 
-  // runs
   const r = runs[0];
   if (r) {
     $("runMeta").textContent = `${r.status} · ${new Date(r.started_at).toLocaleString()} · found ${fmt(r.found_usd)}`;
     $("runlog").textContent = r.log || (r.status === "running" ? "Agent is working…" : "No log.");
-    $("dot").className = "dot" + (r.status === "running" ? " busy" : "");
-    $("agentState").textContent = r.status === "running" ? "Agent running" : "Agent idle · weekly scan Mon 9:00";
+    if (!feeding) { $("dot").className = "dot" + (r.status === "running" ? " busy" : ""); }
   }
 }
 
-// the weekly cron, live from Agent37
-(async () => {
-  try {
-    const c = await (await fetch("/api/cron")).json();
-    if (!c.id) return;
-    const next = c.next_run ? new Date(c.next_run * 1000).toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "—";
-    $("cronLine").innerHTML = `Agent37 cron <span class="uptime">${c.id}</span> · “${c.name}” · <span class="uptime">${c.schedule}</span> ${c.timezone} · next run ${next} · ${c.enabled ? "enabled" : "paused"}`;
-    $("agentState").textContent = `Agent idle · next scan ${next}`;
-  } catch {}
-})();
-
-// realtime when Supabase is configured; otherwise poll the instance-backed store
-if (sb) sb.channel("owed").on("postgres_changes", { event: "*", schema: "public" }, () => load()).subscribe();
-else setInterval(load, 6000);
-
-// run now + live transcript
-let polling = null;
-$("runBtn").onclick = async () => {
-  $("runBtn").disabled = true; $("dot").className = "dot busy"; $("agentState").textContent = "Agent starting…";
-  $("term").innerHTML = `<span class="t">// firing weekly cron on Agent37…</span>\n`;
-  const r = await (await fetch("/api/run", { method: "POST" })).json();
-  const sid = r.session_id;
-  $("term").innerHTML += `<span class="ok">// run ${r.status || "triggered"} on ${r.model || "agent"} · session ${sid || "(pending)"}</span>\n`;
-  if (!r.response_id) { $("runBtn").disabled = false; return; }
-  // live activity feed: tool calls as the agent makes them
-  const es = new EventSource(`/api/stream/${r.response_id}`);
-  const line = (cls, txt) => { $("term").innerHTML += `<span class="${cls}">${txt.replace(/</g,"&lt;").slice(0, 220)}</span>\n`; $("term").scrollTop = $("term").scrollHeight; };
+// ---- run now + live activity feed
+let feeding = false;
+function attachFeed(responseId) {
+  feeding = true; $("runBtn").disabled = true; $("dot").className = "dot busy"; $("agentState").textContent = "Agent running";
+  const es = new EventSource(`/api/stream/${responseId}${q}`);
+  const line = (cls, txt) => { $("term").innerHTML += `<span class="${cls}">${esc(txt).slice(0, 220)}</span>\n`; $("term").scrollTop = $("term").scrollHeight; };
   let thinking = 0;
   es.addEventListener("response.tool_call.started", (e) => { const d = JSON.parse(e.data); line("ok", `▸ ${d.tool || "tool"}  ${d.label || JSON.stringify(d.arguments || {}).slice(0, 160)}`); });
   es.addEventListener("response.reasoning.delta", () => { if (++thinking % 40 === 0) line("t", "… reasoning"); });
-  es.addEventListener("response.output_text.delta", (e) => { try { const d = JSON.parse(e.data); const t = d.output_text?.delta; if (t) line("", t); } catch {} });
-  es.addEventListener("response.completed", () => { line("ok", "✓ run completed"); es.close(); $("runBtn").disabled = false; load(); });
-  es.addEventListener("response.failed", (e) => { line("warn", "✗ run failed " + e.data); es.close(); $("runBtn").disabled = false; });
-  es.onerror = () => { /* stream ended or reconnecting; data poll keeps the UI current */ };
+  es.addEventListener("response.output_text.delta", (e) => { try { const t = JSON.parse(e.data).output_text?.delta; if (t) line("", t); } catch {} });
+  const done = (msg, cls) => { line(cls, msg); es.close(); feeding = false; $("runBtn").disabled = false; loadCron(); load(); };
+  es.addEventListener("response.completed", () => done("✓ run completed", "ok"));
+  es.addEventListener("response.failed", (e) => done("✗ run failed " + e.data, "warn"));
+  es.onerror = () => {};
+}
+$("runBtn").onclick = async () => {
+  $("runBtn").disabled = true; $("dot").className = "dot busy"; $("agentState").textContent = "Agent starting…";
+  $("term").innerHTML = `<span class="t">// running the standing instructions on Agent37…</span>\n`;
+  const r = await (await fetch("/api/run" + q, { method: "POST" })).json();
+  if (r.error || !r.response_id) { $("term").innerHTML += `<span class="warn">// ${esc(r.error || "no response id")}</span>\n`; $("runBtn").disabled = false; return; }
+  $("term").innerHTML += `<span class="ok">// ${esc(r.status)} on ${esc(r.model || "agent")} · session ${esc(r.session_id || "")}</span>\n`;
+  attachFeed(r.response_id);
 };
 
-// approve / file
+// ---- approve / file / drawer
 document.addEventListener("click", async (ev) => {
   const b = ev.target.closest("button[data-act]");
-  if (b) { ev.stopPropagation(); b.disabled = true; await fetch(`/api/claims/${b.dataset.id}/${b.dataset.act}`, { method: "POST" }); return load(); }
+  if (b) { ev.stopPropagation(); b.disabled = true; await fetch(`/api/claims/${b.dataset.id}/${b.dataset.act}${q}`, { method: "POST" }); return load(); }
   const row = ev.target.closest("tr.claim");
   if (row) openClaim(row.dataset.id);
   if (ev.target.closest("#scrim,.close")) closeDrawer();
@@ -272,23 +353,24 @@ document.addEventListener("click", async (ev) => {
 function openClaim(id) {
   const c = claims.find(x => x.id === id); if (!c) return; const e = c.evidence || {};
   $("drawer").innerHTML = `<button class="ghost small close">Close</button>
-    <div class="eyebrow">${vname(c.vendor_id)} · ${c.period || ""}</div>
+    <div class="eyebrow">${esc(vname(c.vendor_id))} · ${esc(c.period || "")}${e.provisional ? " · provisional" : ""}</div>
     <h3>${fmt(c.amount_usd)} owed</h3>
-    <div class="muted">${e.credit_pct}% service credit on ${fmt(e.monthly_spend)}/mo · <a href="${c.citation_url}" target="_blank">cited SLA clause ↗</a>${e.terms_verified === false ? " · demo terms" : ""}</div>
-    <div class="kv"><div>Measured uptime</div><div class="uptime"><span class="bad">${Number(e.uptime_pct).toFixed(3)}%</span> vs ${e.sla_target}% target</div>
-      <div>Downtime</div><div>${e.downtime_minutes} minutes across ${(e.incidents||[]).length} incidents</div>
-      <div>Status</div><div><span class="pill ${c.status}">${c.status}</span></div></div>
+    <div class="muted">${esc(e.credit_pct)}% service credit on ${fmt(e.monthly_spend)}/mo · <a href="${esc(c.citation_url)}" target="_blank" rel="noopener">cited SLA clause ↗</a>${e.terms_verified === false ? " · demo terms" : ""}</div>
+    <div class="kv"><div>Measured uptime</div><div class="uptime"><span class="bad">${Number(e.uptime_pct).toFixed(3)}%</span> vs ${esc(e.sla_target)}% target</div>
+      <div>Downtime</div><div>${esc(e.downtime_minutes)} minutes across ${(e.incidents||[]).length} counted incidents</div>
+      <div>Covered</div><div class="muted">${esc(e.covered || "")}</div>
+      <div>Status</div><div><span class="pill ${esc(c.status)}">${esc(c.status)}</span></div></div>
     <div class="eyebrow">Evidence</div>
-    ${(e.incidents||[]).map(i => `<div class="inc"><div>${i.title || "Incident"}</div><div class="m">${(i.started_at||"").slice(0,16).replace("T"," ")} · ${i.minutes} min · <a href="${i.source_url||"#"}" target="_blank">source</a></div></div>`).join("")}
-    ${(e.not_counted||[]).length ? `<div class="eyebrow" style="margin-top:16px">Listed but not counted</div>${e.not_counted.map(i => `<div class="inc" style="border-left-color:var(--line)"><div>${i.title || ""}</div><div class="m">${(i.started_at||"").slice(0,16).replace("T"," ")} · ${i.minutes ?? "—"} min · ${i.reason || ""}</div></div>`).join("")}` : ""}
-    ${e.claim_deadline ? `<div class="muted" style="margin-top:12px">Deadline: ${e.claim_deadline}</div>` : ""}
+    ${(e.incidents||[]).map(i => `<div class="inc"><div>${esc(i.title || "Incident")}</div><div class="m">${esc((i.started_at||"").slice(0,16).replace("T"," "))} · ${esc(i.minutes)} min · ${esc(i.impact || "")} · <a href="${esc(i.source_url||"#")}" target="_blank" rel="noopener">source</a></div></div>`).join("")}
+    ${(e.not_counted||[]).length ? `<div class="eyebrow" style="margin-top:16px">Listed but not counted</div>${e.not_counted.map(i => `<div class="inc" style="border-left-color:var(--line)"><div>${esc(i.title || "")}</div><div class="m">${esc((i.started_at||"").slice(0,16).replace("T"," "))} · ${esc(i.minutes ?? "—")} min · ${esc(i.reason || "")}</div></div>`).join("")}` : ""}
+    ${e.claim_deadline ? `<div class="muted" style="margin-top:12px">Deadline: ${esc(e.claim_deadline)}</div>` : ""}
     <div class="eyebrow" style="margin-top:18px">Claim drafted by the agent</div>
-    <div class="draft" style="margin-top:8px">${(c.draft||"").replace(/</g,"&lt;")}</div>
-    <div style="display:flex;gap:10px;margin-top:18px">${c.status === "found" ? `<button data-act="approve" data-id="${c.id}">Approve claim</button>` : c.status === "approved" ? `<button data-act="file" data-id="${c.id}">Mark filed</button>` : ""}<button class="ghost" onclick="navigator.clipboard.writeText(${JSON.stringify(c.draft||"")})">Copy draft</button></div>`;
+    <div class="draft" style="margin-top:8px">${esc(c.draft||"")}</div>
+    <div style="display:flex;gap:10px;margin-top:18px">${c.status === "found" ? `<button data-act="approve" data-id="${esc(c.id)}">Approve claim</button>` : c.status === "approved" ? `<button data-act="file" data-id="${esc(c.id)}">Mark filed</button>` : ""}<button class="ghost" id="copyDraft">Copy draft</button></div>`;
+  $("copyDraft").onclick = () => navigator.clipboard.writeText(c.draft || "");
   $("drawer").classList.add("open"); $("scrim").classList.add("open");
 }
 function closeDrawer(){ $("drawer").classList.remove("open"); $("scrim").classList.remove("open"); }
-load();
 </script>
 </body>
 </html>
