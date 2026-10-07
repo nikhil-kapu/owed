@@ -62,6 +62,9 @@ EXCLUDE = [
     (r"maintenance", "scheduled maintenance"),
 ]
 VERCEL_SERVING = r"edge|serv|function|routing|dns|outage|unavailab|50\d|traffic|network|cdn|domain"
+# GitHub Enterprise SLA covers git operations, Issues, Pages, Pull Requests, Webhooks and API requests to these.
+GITHUB_COVERED = r"git operations|\bissues\b|\bpages\b|pull requests|webhooks|\bapi\b|github\.com|several github services|some github services|multiple github services|github services"
+GITHUB_NOT_COVERED = r"\bactions\b|codespaces|copilot|packages|projects|discussions|marketplace|sponsors|dependabot|code ?search"
 
 def classify(v, inc):
     impact = inc.get("impact"); title = inc.get("name") or ""
@@ -76,6 +79,8 @@ def classify(v, inc):
         return False, f"impact {impact}"
     if v["name"] == "Vercel" and not re.search(VERCEL_SERVING, title, re.I):
         return False, "not content serving (Vercel SLA covers content serving only)"
+    if v["name"] == "GitHub" and not re.search(GITHUB_COVERED, title, re.I):
+        return False, "service not covered by the GitHub Enterprise SLA (git ops, Issues, Pages, PRs, Webhooks, API)"
     return True, ""
 
 def draft_email(v, key, up, down, tier, months_in, amount, incs, company):
