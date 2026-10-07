@@ -194,7 +194,13 @@ function render() {
 
   // unclaimed
   const uc = claims.filter(c => c.source === "unclaimed");
-  if (uc.length) { $("ucAmt").textContent = fmt(uc.reduce((s,c)=>s+Number(c.amount_usd),0)); $("ucNote").innerHTML = uc.map(c => `${(c.evidence||{}).holder || "State record"} · <a href="${c.citation_url||"#"}" target="_blank">source</a>`).join("<br>"); }
+  if (uc.length) {
+    const amt = uc.reduce((s,c)=>s+Number(c.amount_usd),0);
+    const e = uc[0].evidence || {};
+    $("ucAmt").textContent = amt > 0 ? fmt(amt) : "No confirmed matches";
+    $("ucNote").innerHTML = (e.searched || []).map(s => `<div style="display:flex;gap:10px;padding:5px 0;border-bottom:1px solid var(--line)"><span style="color:var(--ink);min-width:150px">${s.source}</span><span>${s.result}</span></div>`).join("")
+      + (e.notes ? `<div style="margin-top:8px">${e.notes}</div>` : "");
+  }
 
   // vendors
   $("vendors").innerHTML = vendors.map(v => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)"><span style="color:var(--ink)">${v.name}</span><span class="uptime">${v.sla_target}% SLA · ${fmt(v.monthly_spend)}/mo</span></div>`).join("");
