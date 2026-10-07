@@ -112,6 +112,7 @@
 
   <section>
     <div class="sec-head"><h2>This week's scan</h2><span class="muted" id="runMeta">No runs yet</span></div>
+    <div class="muted" id="cronLine" style="margin:-6px 0 14px">Loading schedule…</div>
     <div class="run">
       <div class="term" id="term"><span class="t">// Agent37 instance <span id="instId"></span>. Press "Run scan now" to fire the weekly cron and watch the agent work.</span></div>
       <div class="runlog" id="runlog">Latest run log will appear here.</div>
@@ -223,6 +224,17 @@ function render() {
     $("agentState").textContent = r.status === "running" ? "Agent running" : "Agent idle · weekly scan Mon 9:00";
   }
 }
+
+// the weekly cron, live from Agent37
+(async () => {
+  try {
+    const c = await (await fetch("/api/cron")).json();
+    if (!c.id) return;
+    const next = c.next_run ? new Date(c.next_run * 1000).toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "—";
+    $("cronLine").innerHTML = `Agent37 cron <span class="uptime">${c.id}</span> · “${c.name}” · <span class="uptime">${c.schedule}</span> ${c.timezone} · next run ${next} · ${c.enabled ? "enabled" : "paused"}`;
+    $("agentState").textContent = `Agent idle · next scan ${next}`;
+  } catch {}
+})();
 
 // realtime when Supabase is configured; otherwise poll the instance-backed store
 if (sb) sb.channel("owed").on("postgres_changes", { event: "*", schema: "public" }, () => load()).subscribe();

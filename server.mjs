@@ -110,6 +110,18 @@ app.get("/api/stream/:responseId", async (req, res) => {
   res.end();
 });
 
+// The weekly cron, straight from Agent37 (proves the schedule is real).
+app.get("/api/cron", async (_req, res) => {
+  try {
+    if (!AGENT37_CRON_ID) return res.json({});
+    const [c, r] = await Promise.all([
+      fetch(`${HOST_URL}/instances/${AGENT37_INSTANCE_ID}/crons/${AGENT37_CRON_ID}`, { headers: hostHeaders }).then(x => x.json()),
+      fetch(`${HOST_URL}/instances/${AGENT37_INSTANCE_ID}/crons/${AGENT37_CRON_ID}/runs`, { headers: hostHeaders }).then(x => x.json()).catch(() => ({})),
+    ]);
+    res.json({ id: c.id, name: c.name, schedule: c.schedule, timezone: c.timezone, enabled: c.enabled, next_run: c.next_run, last_run: c.last_run, runs: (r.data || []).slice(0, 5) });
+  } catch (e) { res.status(500).json({ error: String(e) }); }
+});
+
 // Session transcript (audit trail) proxied from the instance.
 app.get("/api/session/:id", async (req, res) => {
   try {
