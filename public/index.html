@@ -226,23 +226,18 @@ $("runBtn").onclick = async () => {
   $("term").innerHTML = `<span class="t">// firing weekly cron on Agent37…</span>\n`;
   const r = await (await fetch("/api/run", { method: "POST" })).json();
   const sid = r.session_id;
-  $("term").innerHTML += `<span class="ok">// run ${r.status || "triggered"} · session ${sid || "(pending)"}</span>\n`;
-  if (!sid) { $("runBtn").disabled = false; return; }
-  let seen = 0;
-  clearInterval(polling);
-  polling = setInterval(async () => {
-    const s = await (await fetch(`/api/session/${sid}`)).json();
-    const h = s.history || s.messages || [];
-    for (const m of h.slice(seen)) {
-      const role = m.role || m.type || "";
-      let text = typeof m.content === "string" ? m.content : JSON.stringify(m.content).slice(0, 400);
-      if (role === "user") continue;
-      $("term").innerHTML += `<span class="t">[${role}]</span> ${text.replace(/</g,"&lt;").slice(0, 600)}\n`;
-    }
-    seen = h.length; $("term").scrollTop = $("term").scrollHeight;
-    const done = s.status && s.status !== "in_progress" && s.status !== "running";
-    if (done || (runs[0] && runs[0].status !== "running" && seen > 2)) { clearInterval(polling); $("runBtn").disabled = false; load(); }
-  }, 4000);
+  $("term").innerHTML += `<span class="ok">// run ${r.status || "triggered"} on ${r.model || "agent"} · session ${sid || "(pending)"}</span>\n`;
+  if (!r.response_id) { $("runBtn").disabled = false; return; }
+  // live activity feed: tool calls as the agent makes them
+  const es = new EventSource(`/api/stream/${r.response_id}`);
+  const line = (cls, txt) => { $("term").innerHTML += `<span class="${cls}">${txt.replace(/</g,"&lt;").slice(0, 220)}</span>\n`; $("term").scrollTop = $("term").scrollHeight; };
+  let thinking = 0;
+  es.addEventListener("response.tool_call.started", (e) => { const d = JSON.parse(e.data); line("ok", `▸ ${d.tool || "tool"}  ${d.label || JSON.stringify(d.arguments || {}).slice(0, 160)}`); });
+  es.addEventListener("response.reasoning.delta", () => { if (++thinking % 40 === 0) line("t", "… reasoning"); });
+  es.addEventListener("response.delta", (e) => { try { const d = JSON.parse(e.data); const t = d.output_text?.delta; if (t) line("", t); } catch {} });
+  es.addEventListener("response.completed", () => { line("ok", "✓ run completed"); es.close(); $("runBtn").disabled = false; load(); });
+  es.addEventListener("response.failed", (e) => { line("warn", "✗ run failed " + e.data); es.close(); $("runBtn").disabled = false; });
+  es.onerror = () => { /* stream ended or reconnecting; data poll keeps the UI current */ };
 };
 
 // approve / file

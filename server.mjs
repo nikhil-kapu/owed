@@ -98,6 +98,18 @@ app.post("/api/run", async (_req, res) => {
   } catch (e) { res.status(500).json({ error: String(e) }); }
 });
 
+// Live event stream of a running turn (re-attachable SSE passthrough) for the dashboard's activity feed.
+app.get("/api/stream/:responseId", async (req, res) => {
+  try {
+    const r = await fetch(`${AGENT_URL}/v1/responses/${req.params.responseId}/stream`, { headers: agentHeaders });
+    res.setHeader("Content-Type", "text/event-stream"); res.setHeader("Cache-Control", "no-cache"); res.flushHeaders?.();
+    const reader = r.body.getReader(); const dec = new TextDecoder();
+    req.on("close", () => reader.cancel().catch(() => {}));
+    for (;;) { const { value, done } = await reader.read(); if (done) break; res.write(dec.decode(value)); }
+  } catch {}
+  res.end();
+});
+
 // Session transcript (audit trail) proxied from the instance.
 app.get("/api/session/:id", async (req, res) => {
   try {
